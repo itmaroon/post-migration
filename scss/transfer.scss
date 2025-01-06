@@ -1,0 +1,22 @@
+
+  
+
+#api_check{
+	position: relative;
+	&:hover{
+		cursor: pointer;
+	}
+	&.checking{
+		padding-right: 3rem;
+		&::after {
+			content: "";
+			position: absolute;
+			top: 50%;
+			transform: translateY(-50%);
+			right: 0.5rem;
+			width: 1.5rem;
+			height: 1.5rem;
+			background: transparent url('../img/transloading.gif') no-repeat center center / cover;
+		}
+	}
+}
