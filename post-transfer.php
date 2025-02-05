@@ -159,6 +159,7 @@ function itmar_post_tranfer_export_page()
     <div class="form-container">
       <form method="post" action="">
         <input type="hidden" name="export_action" value="export_json">
+
         <!-- ヘッダーを固定 -->
         <div class="fixed-header">
           <h1>カスタムエクスポート</h1>
@@ -255,7 +256,6 @@ function itmar_post_tranfer_export_page()
             }
 
             echo "</tbody></table>";
-
             // ページネーションの表示
             if ($total_pages > 1) {
               echo "<div class='tablenav'>";
@@ -277,6 +277,8 @@ function itmar_post_tranfer_export_page()
             }
           }
         }
+        //他のページで選択された投稿IDも含めて格納するinput要素
+        echo "<input type='hidden' name='all_export_posts'>"
         ?>
 
         <p class='footer_exec'><input type="submit" name="export_selected" class="button button-primary" value="選択した記事をエクスポート"></p>
@@ -336,15 +338,20 @@ function itmar_post_tranfer_export_page()
           });
         });
 
-        // チェックボックスの状態を復元
+
         function restoreSelectedPosts() {
           selectedPosts = JSON.parse(sessionStorage.getItem(storageKey)) || [];
-
+          // チェックボックスの状態を復元
           document.querySelectorAll("input[name='export_posts[]']").forEach(function(checkbox) {
             if (selectedPosts.includes(checkbox.value)) {
               checkbox.checked = true;
             }
           });
+          //選択済みの投稿IDをinput-hiddenに確保
+          if (selectedPosts) {
+            document.querySelector("input[name='all_export_posts']").value = selectedPosts.join(",");
+          }
+
           //実行ボタンのアニメーション
           exec_animation();
         }
@@ -360,6 +367,10 @@ function itmar_post_tranfer_export_page()
             } else {
               // 解除された場合、配列から削除
               selectedPosts = selectedPosts.filter(id => id !== this.value);
+            }
+            //選択済みの投稿IDをinput-hiddenに確保
+            if (selectedPosts) {
+              document.querySelector("input[name='all_export_posts']").value = selectedPosts.join(",");
             }
             //実行ボタンのアニメーション
             exec_animation();
@@ -457,8 +468,6 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
 //インポートの実行処理
 function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
 {
-  ob_start(); // 出力バッファ開始
-
   echo '<h2>インポート結果</h2>';
   echo '<table class="widefat">';
   echo '<thead><tr><th>#</th><th>タイトル</th><th>投稿タイプ</th><th>結果</th><th>エラー</th></tr></thead>';
@@ -472,6 +481,7 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
   }
 
   foreach ($decoded_data as $index => $entry) {
+
     //JSONのデコード結果から情報を取り出し
     $post_id = isset($entry['ID']) ? intval($entry['ID']) : 0;
     $post_title = isset($entry['title']) ? esc_html($entry['title']) : '（タイトルなし）';
@@ -499,7 +509,7 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
     // 投稿データ
     $post_data = array(
       'post_title'   => $post_title,
-      'post_content' => $entry['content'] ?? '',
+      'post_content' => wp_slash($post_content),
       'post_excerpt' => $entry['excerpt'] ?? '',
       'post_status'  => 'publish',
       'post_type'    => $post_type,
@@ -521,6 +531,7 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
       $new_post_id = wp_insert_post($post_data, true);
       $result = is_wp_error($new_post_id) ? 'エラー（追加失敗）' : '新規追加';
     }
+
 
     //投稿データのインポート終了後
     if ($new_post_id && !is_wp_error($new_post_id)) {
@@ -549,7 +560,7 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
           // 投稿の本文を更新
           $update_content_data = array(
             'ID'           => $new_post_id,
-            'post_content' => $post_content,
+            'post_content' => wp_slash($post_content),
           );
           wp_update_post($update_content_data);
         }
@@ -643,8 +654,6 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
   echo '</table>';
 
   $zip->close();
-  $output = ob_get_clean(); // バッファリングの内容を取得
-  echo $output; // まとめて出力
 }
 
 // JSONインポート処理
@@ -782,9 +791,12 @@ function itmar_is_acf_active()
 // JSONエクスポート処理
 function itmar_post_tranfer_export_json()
 {
-  if (isset($_POST['export_action']) && $_POST['export_action'] === 'export_json' && (isset($_POST['export_posts']) || isset($_POST['export_types']))) {
+  if (isset($_POST['export_action']) && $_POST['export_action'] === 'export_json' && isset($_POST['all_export_posts']) && (isset($_POST['export_posts']) || isset($_POST['export_types']))) {
+    //
     //個別に選択された投稿のID
-    $post_ids = isset($_POST['export_posts']) ? array_map('intval', $_POST['export_posts']) : [];
+    //$post_ids = isset($_POST['export_posts']) ? array_map('intval', $_POST['export_posts']) : [];
+    $str_post_ids = isset($_POST['all_export_posts']) ? $_POST['all_export_posts'] : "";
+    $post_ids = explode(",", $str_post_ids);
     $selected_post_types = isset($_POST['export_types']) ? $_POST['export_types'] : [];
     // 選択された投稿タイプの全ての投稿 ID を取得し統合
     $all_selected_posts = array_merge(...array_map(function ($post_type) {
@@ -796,6 +808,8 @@ function itmar_post_tranfer_export_json()
     }, $selected_post_types));
     //個別選択のIDと統合
     $selected_posts = array_unique(array_merge($post_ids, $all_selected_posts));
+
+
     //カスタムフィールドの選択設定
     $include_custom_fields = isset($_POST['include_custom_fields']);
 
