@@ -46,6 +46,10 @@
     padding: 15px 20px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* 軽い影をつける */
     z-index: 1000; /* 他の要素より前面に表示 */
+
+    label:not(:first-of-type) { // 最初の要素以外
+        margin-left: 30px;
+    }
 }
 
 /* 固定ヘッダーの下にフォームが隠れないように、上の余白を調整 */
@@ -71,3 +75,35 @@
         transform: translateY(0);
     }
 }
+.post_trns_link{
+    margin-top: 20px;
+}
+.post_trns_tbody {
+    .data_line {
+      &:nth-child(odd) {
+        background-color: #f0f8ff; // 奇数番目の背景色
+      }
+      &:nth-child(even) {
+        background-color: #dbeafe; // 偶数番目の背景色
+      }
+    }
+  
+    .skip_line {
+      &:nth-child(odd) {
+        background-color: #afafaf; // 奇数番目の背景色
+      }
+      &:nth-child(even) {
+        background-color: #8b8b8b; // 偶数番目の背景色
+      }
+    }
+
+    .rev_line {
+        &:nth-child(odd) {
+          background-color: #ffebcd; // 奇数番目の背景色
+        }
+        &:nth-child(even) {
+          background-color: #f5deb3; // 偶数番目の背景色
+        }
+      }
+  }
+  

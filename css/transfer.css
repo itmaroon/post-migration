@@ -44,6 +44,9 @@
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* 軽い影をつける */
   z-index: 1000; /* 他の要素より前面に表示 */
 }
+.fixed-header label:not(:first-of-type) {
+  margin-left: 30px;
+}
 
 /* 固定ヘッダーの下にフォームが隠れないように、上の余白を調整 */
 .form-container {
@@ -67,5 +70,28 @@
 .footer_exec.appear {
   opacity: 1;
   transform: translateY(0);
+}
+
+.post_trns_link {
+  margin-top: 20px;
+}
+
+.post_trns_tbody .data_line:nth-child(odd) {
+  background-color: #f0f8ff;
+}
+.post_trns_tbody .data_line:nth-child(even) {
+  background-color: #dbeafe;
+}
+.post_trns_tbody .skip_line:nth-child(odd) {
+  background-color: #afafaf;
+}
+.post_trns_tbody .skip_line:nth-child(even) {
+  background-color: #8b8b8b;
+}
+.post_trns_tbody .rev_line:nth-child(odd) {
+  background-color: #ffebcd;
+}
+.post_trns_tbody .rev_line:nth-child(even) {
+  background-color: #f5deb3;
 }
 /*# sourceMappingURL=transfer.css.map */

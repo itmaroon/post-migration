@@ -104,14 +104,14 @@ function itmar_post_tranfer_import_page()
 
 ?>
   <div class="wrap">
-    <h1>データインポート</h1>
+    <h1><?php echo esc_html__("Post Data Import", "post-transfer"); ?></h1>
     <form method="post" enctype="multipart/form-data">
       <?php wp_nonce_field('custom_import_action', 'custom_import_nonce'); ?>
 
       <!-- ZIP ファイル選択 -->
       <table class="form-table">
         <tr>
-          <th><label for="import_file">インポートする ZIP ファイル</label></th>
+          <th><label for="import_file"><?php echo esc_html__("ZIP file to import", "post-transfer"); ?></label></th>
           <td>
             <input type="file" name="import_file" id="import_file" accept=".zip" required>
           </td>
@@ -119,20 +119,20 @@ function itmar_post_tranfer_import_page()
 
         <!-- インポート方法選択 -->
         <tr>
-          <th>インポート方法</th>
+          <th><?php echo esc_html__("How to import", "post-transfer"); ?></th>
           <td>
             <label>
-              <input type="radio" name="import_mode" value="update" checked> ID による上書き
+              <input type="radio" name="import_mode" value="update" checked> <?php echo esc_html__("Override by ID", "post-transfer"); ?>
             </label><br>
             <label>
-              <input type="radio" name="import_mode" value="create"> 新規レコード追加
+              <input type="radio" name="import_mode" value="create"> <?php echo esc_html__("Add new record", "post-transfer"); ?>
             </label>
           </td>
         </tr>
       </table>
 
       <p class="submit">
-        <input type="submit" name="submit_import" class="button button-primary" value="インポート開始">
+        <input type="submit" name="submit_import" class="button button-primary" value="<?php echo esc_attr__("Start Import", "post-transfer"); ?>">
       </p>
     </form>
     <?php itmar_post_tranfer_import_json(); ?>
@@ -162,11 +162,19 @@ function itmar_post_tranfer_export_page()
 
         <!-- ヘッダーを固定 -->
         <div class="fixed-header">
-          <h1>カスタムエクスポート</h1>
-          <p>エクスポートしたい記事を選択してください。</p>
+          <h1><?php echo esc_html__("Post Data Custom Export", "post-transfer") ?></h1>
+          <p><?php echo esc_html__("Select the articles you want to export.") ?></p>
           <label>
             <input type="checkbox" id="include_custom_fields" name="include_custom_fields" value="1">
-            カスタムフィールドも含める
+            <?php echo esc_html__("Include custom fields", "post-transfer") ?>
+          </label>
+          <label>
+            <input type="checkbox" id="include_revisions" name="include_revisions" value="1">
+            <?php echo esc_html__("Include revisions", "post-transfer") ?>
+          </label>
+          <label>
+            <input type="checkbox" id="include_comments" name="include_comments" value="1">
+            <?php echo esc_html__("Include comments", "post-transfer") ?>
           </label>
         </div>
 
@@ -215,19 +223,19 @@ function itmar_post_tranfer_export_page()
           if ($posts) {
             echo "<h2>{$post_type->label}</h2>";
             // すべてのレコードを選択 チェックボックスを追加
-            echo "<label class='select-all-posts'><input type='checkbox' name='export_types[]' value='{$post_type->name}'> すべてのレコードを選択</label>";
+            echo "<label class='select-all-posts'><input type='checkbox' name='export_types[]' value='{$post_type->name}'>" . __(' Select all records', 'post-transfer') . "</label>";
             // 投稿タイプに紐づくタクソノミーを取得（ヘッダー用）
             $taxonomies = get_object_taxonomies($post_type->name, 'objects');
             // **post_format を配列から削除**
             unset($taxonomies['post_format']);
             //投稿のテーブル
             echo "<table class='widefat striped'>";
-            echo "<thead><tr><th><input type='checkbox' id='select-all-{$post_type->name}'></th><th>タイトル</th><th>アイキャッチ</th>";
+            echo "<thead><tr><th><input type='checkbox' id='select-all-{$post_type->name}'></th><th>" . __('Title', 'post-transfer') . "</th><th>" . __('Featured', 'post-transfer') . "</th>";
             // タクソノミーごとにヘッダーを追加
             foreach ($taxonomies as $taxonomy) {
               echo "<th>{$taxonomy->label}</th>";
             }
-            echo "<th>変更日</th></tr></thead>";
+            echo "<th>" . __('Updated on', 'post-transfer') . "</th></tr></thead>";
             echo "<tbody>";
 
             foreach ($posts as $post) {
@@ -239,7 +247,7 @@ function itmar_post_tranfer_export_page()
               echo "<tr>";
               echo "<td><input type='checkbox' name='export_posts[]' value='{$post->ID}'></td>";
               echo "<td>{$post->post_title}</td>";
-              echo "<td>" . ($thumbnail ?: 'なし') . "</td>";
+              echo "<td>" . ($thumbnail ?: __('None', 'post-transfer')) . "</td>";
               // タクソノミーごとのタームを取得し、カンマ区切りで表示
               foreach ($taxonomies as $taxonomy) {
                 $terms = get_the_terms($post->ID, $taxonomy->name);
@@ -263,14 +271,14 @@ function itmar_post_tranfer_export_page()
 
               // 前のページ
               if ($current_page > 1) {
-                echo '<a class="button" href="?page=' . esc_attr($_GET['page']) . '&paged_' . $post_type->name . '=' . ($current_page - 1) . '">« 前へ</a>';
+                echo '<a class="button" href="?page=' . esc_attr($_GET['page']) . '&paged_' . $post_type->name . '=' . ($current_page - 1) . '">« ' . __('Before', 'post-transfer') . '</a>';
               }
 
-              echo " ページ {$current_page} / {$total_pages} ";
+              echo __('Page', 'post-transfer') . " {$current_page} / {$total_pages} ";
 
               // 次のページ
               if ($current_page < $total_pages) {
-                echo '<a class="button" href="?page=' . esc_attr($_GET['page']) . '&paged_' . $post_type->name . '=' . ($current_page + 1) . '">次へ »</a>';
+                echo '<a class="button" href="?page=' . esc_attr($_GET['page']) . '&paged_' . $post_type->name . '=' . ($current_page + 1) . '">' . __('Next', 'post-transfer') . '»</a>';
               }
 
               echo "</div></div>";
@@ -418,8 +426,7 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
   if (file_exists($dest_path)) {
     $attachment_id = itmar_get_attachment_id_by_file_path($dest_path);
     if ($attachment_id) {
-      echo "✅ 既存ファイルが見つかりました (メディア ID: $attachment_id): " . $dest_path . "<br>" . PHP_EOL;
-      return $attachment_id;
+      return new WP_Error('file_exists', __("Processing stopped due to existing file found (media ID:", "post-transfer") . $attachment_id . ")");
     }
   }
 
@@ -428,17 +435,15 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
     $zip->extractTo($extract_path, $file_path);
     rename($extract_path . $file_path, $extract_path . basename($file_path)); // ZIPファイル内のフォルダから正しい位置に移動
   } else {
-    echo "❌ ZIP 内にファイルが見つかりません: " . $file_path . "<br>";
-    return false;
+    return new WP_Error('file_not_found', __("File not found in ZIP", "post-transfer"));
   }
-
   // Windows のパス区切りを `/` に統一
   $dest_path = str_replace('\\', '/', $dest_path);
 
   // 展開されたファイルがあるかチェック
   if (!file_exists($dest_path)) {
-    echo "❌ 展開された画像が見つかりません: " . $dest_path . "<br>";
-    return false;
+
+    return new WP_Error('file_not_found', __("Unpacked image not found:", "post-transfer") . $dest_path);
   }
 
   // WPメディアに登録
@@ -455,9 +460,9 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
   $attachment_data = wp_generate_attachment_metadata($attachment_id, $dest_path);
   // メタデータ更新前にファイルが存在するか確認
   if (!file_exists($dest_path)) {
-    echo "❌ メタデータ更新前にファイルが削除されました: " . $dest_path . "<br>";
-    return false;
+    return new WP_Error('file_not_found', __("File was deleted before metadata was updated:", "post-transfer") . $dest_path);
   }
+
 
   wp_update_attachment_metadata($attachment_id, $attachment_data);
 
@@ -468,28 +473,50 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
 //インポートの実行処理
 function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
 {
-  echo '<h2>インポート結果</h2>';
+  echo '<h2>' . __("Import Result", "post-transfer") . '</h2>';
   echo '<table class="widefat">';
-  echo '<thead><tr><th>#</th><th>タイトル</th><th>投稿タイプ</th><th>結果</th><th>エラー</th></tr></thead>';
-  echo '<tbody>';
+  echo '<thead><tr><th>#</th><th>' . __("Title", "post-transfer") . '</th><th>' . __("Post Type", "post-transfer") . '</th><th>' . __("Result", "post-transfer") . '</th></tr></thead>';
+  echo '<tbody class="post_trns_tbody">';
 
   // ZIP ファイルを開く
   $zip = new ZipArchive;
   if ($zip->open($zip_path) !== true) {
-    echo '<div class="error"><p>ZIPファイルの展開に失敗しました。</p></div>';
+    echo '<div class="error"><p>' . __("Failed to extract ZIP file.", "post-transfer") . '</p></div>';
     return;
   }
+  //インポートしたデータのIDを保存しておく変数
+  $parent_id = 0;
 
+  //エラーログ
+  $error_logs = [];
+
+  //インポートのループ
   foreach ($decoded_data as $index => $entry) {
-
     //JSONのデコード結果から情報を取り出し
     $post_id = isset($entry['ID']) ? intval($entry['ID']) : 0;
-    $post_title = isset($entry['title']) ? esc_html($entry['title']) : '（タイトルなし）';
-    $post_type = isset($entry['post_type']) ? esc_html($entry['post_type']) : '（不明）';
+    $post_title = isset($entry['title']) ? esc_html($entry['title']) : '';
+    $post_type = isset($entry['post_type']) ? esc_html($entry['post_type']) : '';
+    $post_status = isset($entry['post_status']) ? esc_html($entry['post_status']) : '';
     $post_date = isset($entry['date']) ? $entry['date'] : current_time('mysql');
     $post_modified = isset($entry['modified']) ? $entry['modified'] : current_time('mysql');
     $post_author = isset($entry['author']) ? get_user_by('login', $entry['author'])->ID ?? 1 : 1;
+    $post_parent = isset($entry['post_parent']) ? intval($entry['ID']) : 0;
+    $post_name = isset($entry['post_name']) ? esc_html($entry['post_name']) : '';
     $thumbnail_path = $entry['thumbnail_path'] ?? null;
+
+    $error_logs[] = "==={$post_title}(ID:{$post_id} TYPE:{$post_type})===";
+
+    // 投稿タイプが登録されていない場合はスキップ
+    if (!post_type_exists($post_type)) {
+      echo "<tr class='skip_line'><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>" . __("Skip (unregistered post type)", "post-transfer") . "</td></tr>";
+    }
+
+    //ID上書きのリビジョンデータはスキップ
+    if ($post_id > 0 && get_post($post_id) && $import_mode === "update" && $post_type === "revision") {
+      echo "<tr class='skip_line'><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>" . __("Skip (Existing data available)", "post-transfer") . "</td></tr>";
+      continue;
+    }
+
     //投稿本文内のメディアファイルのパスを配列にする
     $post_content = $entry['content'] ?? '';
     $content_mediaURLs = [];
@@ -499,11 +526,16 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
       $content_mediaURLs = $matches[0] ?? []; // `matches[0]` にフルパス名が格納される
     }
 
-
-    // 投稿タイプが登録されていない場合はスキップ
-    if (!post_type_exists($post_type)) {
-      echo "<tr><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>スキップ（未登録の投稿タイプ）</td></tr>";
-      continue;
+    // 本文内画像のインポートと本文の修正
+    foreach ($content_mediaURLs as $media_url) {
+      $attachment_id = itmar_import_thumbnail_from_zip($zip, $media_url, 0);
+      //本文内の$media_urlとアタッチメントIDで取得したURLを置換
+      if (!is_wp_error($attachment_id)) {
+        $attachment_url = wp_get_attachment_url($attachment_id);
+        $post_content = str_replace($media_url, $attachment_url, $post_content);
+      } else {
+        $error_logs[] = $attachment_id->get_error_message();
+      }
     }
 
     // 投稿データ
@@ -511,25 +543,46 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
       'post_title'   => $post_title,
       'post_content' => wp_slash($post_content),
       'post_excerpt' => $entry['excerpt'] ?? '',
-      'post_status'  => 'publish',
+      'post_status'  => $post_status,
       'post_type'    => $post_type,
       'post_date'     => $post_date,
       'post_modified' => $post_modified,
       'post_author'   => $post_author,
     );
+    //revisionレコードの場合
+    if ($parent_id != 0 && $post_type === "revision") {
+      $post_data["post_parent"] = $parent_id;
+      $post_data['post_name'] = "{$parent_id}-revision-v1"; // 一意なリビジョン名
+    } else {
+      $post_data['post_name'] = $post_name;
+    }
 
-    //エラーログ
-    $error_logs = [];
+
 
     // インポートモードがupdateで、既存投稿があれば上書き、なければ新規追加
     if ($post_id > 0 && get_post($post_id) && $import_mode === "update") {
       $post_data['ID'] = $post_id;
       $updated_post_id = wp_update_post($post_data, true);
-      $result = is_wp_error($updated_post_id) ? 'エラー（更新失敗）' : '上書き成功';
-      $new_post_id = $updated_post_id;
+      if (is_wp_error($updated_post_id)) {
+        $result = __("Error (update failed)", "post-transfer");
+        $error_logs[] = "ID " . $post_id . ": " . $updated_post_id->get_error_message();
+      } else {
+        $result = __("Overwrite successful", "post-transfer");
+        $new_post_id = $updated_post_id;
+      }
     } else {
       $new_post_id = wp_insert_post($post_data, true);
-      $result = is_wp_error($new_post_id) ? 'エラー（追加失敗）' : '新規追加';
+      if (is_wp_error($new_post_id)) {
+        $result = __("Error (addition failed)", "post-transfer");
+        $error_logs[] = "ID " . $post_id . ": " . $new_post_id->get_error_message();
+      } else {
+        $result = __("Addition successful", "post-transfer");
+      }
+    }
+
+    //親データとしてIDをキープ
+    if ($post_status != "inherit") {
+      $parent_id = $new_post_id;
     }
 
 
@@ -546,25 +599,13 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
       if (!empty($thumbnail_path)) {
         // アイキャッチ画像のインポートと設定
         $attachment_id = itmar_import_thumbnail_from_zip($zip, $thumbnail_path, $new_post_id);
-        if ($attachment_id) {
+        if (!is_wp_error($attachment_id)) {
           set_post_thumbnail($new_post_id, $attachment_id);
+        } else {
+          $error_logs[] = $attachment_id->get_error_message();
         }
       }
-      // 本文内画像のインポートと設定
-      foreach ($content_mediaURLs as $media_url) {
-        $attachment_id = itmar_import_thumbnail_from_zip($zip, $media_url, $new_post_id);
-        //本文内の$media_urlとアタッチメントIDで取得したURLを置換
-        if ($attachment_id) {
-          $attachment_url = wp_get_attachment_url($attachment_id);
-          $post_content = str_replace($media_url, $attachment_url, $post_content);
-          // 投稿の本文を更新
-          $update_content_data = array(
-            'ID'           => $new_post_id,
-            'post_content' => wp_slash($post_content),
-          );
-          wp_update_post($update_content_data);
-        }
-      }
+
       //カスタムフィールドのインポート
       if (isset($entry['custom_fields'])) {
         foreach ($entry['custom_fields'] as $field => $value) {
@@ -581,7 +622,11 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
             if (preg_match('/exported_media\/(.+?\.[a-zA-Z0-9]+)/u', $value, $matches)) { //メディアフィールド
               $attachment_id = itmar_import_thumbnail_from_zip($zip, $matches[0], $new_post_id);
               //本文内の$media_urlとアタッチメントIDで取得したURLを置換
-              $acf_fields[$key] = $attachment_id;
+              if (!is_wp_error($attachment_id)) {
+                $acf_fields[$key] = $attachment_id;
+              } else {
+                $error_logs[] = $attachment_id->get_error_message();
+              }
             }
           }
 
@@ -619,39 +664,44 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
           $error_logs[] = "ID " . $new_post_id . ": ACFまたはSCFがインストールされていません。";
         }
       }
-    }
-    // エラーログがある場合、ファイルを作成してダウンロード
-    if (!empty($error_logs)) {
-      $log_file_path = wp_upload_dir()['path'] . "/error_log_{$new_post_id}.html";
-
-      // **HTMLヘッダーを追加**
-      $html_content = "<!DOCTYPE html>
-      <html lang='ja'>
-      <head>
-          <meta charset='UTF-8'>
-          <title>エラーログ</title>
-      </head>
-      <body>
-      <pre>" . implode("\n", $error_logs) . "</pre>
-      </body>
-      </html>";
-
-      // UTF-8 に変換して保存
-      file_put_contents($log_file_path, mb_convert_encoding($html_content, "UTF-8", "auto"));
-
-      // ダウンロード用のURLを取得
-      $log_file_url = wp_upload_dir()['url'] . "/error_log_{$new_post_id}.html";
-      //結果表示
-      $result_disp = "<a href='" . esc_url($log_file_url) . "'>エラーログ</a>";
-    } else {
-      $result_disp = "エラーなし";
+      //コメントのインポート
+      if (isset($entry['comments'])) {
+        itmar_insert_comments_with_meta($entry['comments'], $new_post_id, $import_mode === "update");
+      }
     }
 
-    echo "<tr><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>{$result}</td><td>{$result_disp}</td></tr>";
+    $line_class = $post_type === 'revision' ? 'rev_line' : 'data_line';
+    echo "<tr class='{$line_class}'><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>{$result}</td></tr>";
   }
 
   echo '</tbody>';
   echo '</table>';
+
+  // エラーログがある場合、ファイルを作成してダウンロード
+  if (!empty($error_logs)) {
+    $filename = pathinfo($zip_path, PATHINFO_FILENAME);
+    $log_file_path = wp_upload_dir()['path'] . "/error_log_{$filename}.html";
+
+    // **HTMLヘッダーを追加**
+    $html_content = "<!DOCTYPE html>
+    <html lang='ja'>
+    <head>
+        <meta charset='UTF-8'>
+        <title>" . esc_html__("Post Data Import", "post-transfer") . "</title>
+    </head>
+    <body>
+    <pre>" . implode("\n", $error_logs) . "</pre>
+    </body>
+    </html>";
+
+    // UTF-8 に変換して保存
+    file_put_contents($log_file_path, mb_convert_encoding($html_content, "UTF-8", "auto"));
+
+    // ダウンロード用のURLを取得
+    $log_file_url = wp_upload_dir()['url'] . "/error_log_{$filename}.html";
+    //エラーログ表示のリンク
+    echo wp_kses_post("<div class='post_trns_link'><a href='{$log_file_url}' target='_blank'>" . esc_html__("Viewing Error Logs", "post-transfer") . "</a></div>");
+  }
 
   $zip->close();
 }
@@ -669,7 +719,7 @@ function itmar_post_tranfer_import_json()
 
   // ファイルが選択されていない場合はエラー
   if (empty($_FILES['import_file']['name'])) {
-    echo '<div class="error"><p>ZIPファイルを選択してください。</p></div>';
+    echo '<div class="error"><p>' . esc_html__("Select the ZIP file.", "post-transfer") . ' </p></div>';
     return;
   }
 
@@ -680,7 +730,7 @@ function itmar_post_tranfer_import_json()
 
   // ZIPファイルを一時ディレクトリに保存
   if (!move_uploaded_file($file['tmp_name'], $zip_path)) {
-    echo '<div class="error"><p>ファイルのアップロードに失敗しました。</p></div>';
+    echo '<div class="error"><p>' . esc_html__("File upload failed.", "post-transfer") . '</p></div>';
     return;
   }
 
@@ -694,7 +744,7 @@ function itmar_post_tranfer_import_json()
     if ($zip->locateName($json_filename) !== false) {
       $zip->extractTo($upload_dir['path'], $json_filename);
     } else {
-      echo '<div class="error"><p>ZIPファイルに "export_data.json" が含まれていません。</p></div>';
+      echo '<div class="error"><p>' . esc_html__("The ZIP file does not contain \"export_data.json\"", "post-transfer") . '</p></div>';
       $zip->close();
       unlink($zip_path); // ZIP削除
       return;
@@ -710,15 +760,15 @@ function itmar_post_tranfer_import_json()
       if (!empty($decoded_data) && is_array($decoded_data)) {
         itmar_process_import_data($decoded_data, $zip_path, $import_mode);
       } else {
-        echo '<div class="error"><p>JSONデータの解析に失敗しました。</p></div>';
+        echo '<div class="error"><p>' . esc_html__("Failed to parse JSON data.", "post-transfer") . '</p></div>';
       }
 
       unlink($json_path); // JSON削除
     } else {
-      echo '<div class="error"><p>展開したJSONファイルが見つかりません。</p></div>';
+      echo '<div class="error"><p>' . esc_html__("I can't find the extracted JSON file.", "post-transfer") . '</p></div>';
     }
   } else {
-    echo '<div class="error"><p>ZIPファイルの展開に失敗しました。</p></div>';
+    echo '<div class="error"><p>' . esc_html__("Failed to extract ZIP file.", "post-transfer") . '</p></div>';
   }
 
   unlink($zip_path); // ZIP削除
@@ -782,11 +832,143 @@ function itmar_extract_media_urls($content)
   return $media_urls;
 }
 
+//acfがアクティブかどうかを判定する関数
 function itmar_is_acf_active()
 {
   return function_exists('get_field') && function_exists('get_field_object');
 }
 
+//コメントデータの取得（metaデータを含む）
+function itmar_get_comments_with_meta($post_id)
+{
+  $args = array(
+    'post_id' => $post_id,
+    'status'  => 'approve',
+    'orderby' => 'comment_date',
+    'order'   => 'ASC'
+  );
+
+  $comments = get_comments($args);
+  $formatted_comments = array();
+
+  foreach ($comments as $comment) {
+    // メタデータを取得
+    $meta_data = get_comment_meta($comment->comment_ID);
+    $meta_formatted = array();
+
+    // メタデータを整形（配列をそのまま使うとJSONで不便なので平坦化）
+    foreach ($meta_data as $key => $value) {
+      $meta_formatted[$key] = is_array($value) ? $value[0] : $value; // 配列なら最初の値だけ取得
+    }
+
+    // コメントデータをフォーマット（メタデータを "meta" キーに格納）
+    $formatted_comments[] = array(
+      'comment_ID'         => strval($comment->comment_ID),
+      'comment_post_ID'    => strval($comment->comment_post_ID),
+      'comment_author'     => $comment->comment_author,
+      'comment_author_email' => $comment->comment_author_email,
+      'comment_date'       => $comment->comment_date,
+      'comment_date_gmt'   => $comment->comment_date_gmt,
+      'comment_content'    => $comment->comment_content,
+      'comment_karma'      => strval($comment->comment_karma),
+      'comment_approved'   => strval($comment->comment_approved),
+      'comment_type'       => $comment->comment_type,
+      'comment_parent'     => strval($comment->comment_parent),
+      'user_id'            => strval($comment->user_id),
+      'meta'               => $meta_formatted // メタデータを "meta" に格納
+    );
+  }
+
+  return $formatted_comments;
+}
+
+//コメントをメタデータとともにインサートする関数
+function itmar_insert_comments_with_meta($comments_data, $post_id, $override_flg)
+{
+  global $wpdb;
+
+
+  $comment_id_map = []; // 旧コメントID → 新コメントID のマッピング用配列
+  $pending_comments = []; // 親コメントが未登録のコメントを一時保存
+
+  // まず親コメントを登録（`comment_parent` が 0 のもの）
+  foreach ($comments_data as $comment_data) {
+    $existing_comment = false; //上書きの判断フラグを初期化
+    if ($override_flg) {
+      // 既存のコメントがあるか確認
+      $existing_comment = $wpdb->get_var($wpdb->prepare(
+        "SELECT comment_ID FROM {$wpdb->comments} WHERE comment_ID = %d",
+        $comment_data['comment_ID']
+      ));
+    }
+    if ($comment_data['comment_parent'] == 0) {
+      $new_comment_id = itmar_post_single_comment($comment_data, $post_id, $existing_comment);
+      if ($new_comment_id) {
+        $comment_id_map[$comment_data['comment_ID']] = $new_comment_id;
+      }
+    } else {
+      // 親コメントがまだ登録されていないので後で処理する
+      $pending_comments[] = $comment_data;
+    }
+  }
+
+  // 子コメントを登録（`comment_parent` が 0 以外のもの）
+  foreach ($pending_comments as $comment_data) {
+    $old_parent_id = $comment_data['comment_parent'];
+
+    // マッピングが存在すれば、新しいIDに変換
+    if (isset($comment_id_map[$old_parent_id])) {
+      $comment_data['comment_parent'] = $comment_id_map[$old_parent_id];
+    } else {
+      // 親コメントが見つからない場合は 0 にする
+      $comment_data['comment_parent'] = 0;
+    }
+
+    // 子コメントを挿入
+    $new_comment_id = itmar_post_single_comment($comment_data, $post_id, $existing_comment);
+    if ($new_comment_id) {
+      $comment_id_map[$comment_data['comment_ID']] = $new_comment_id;
+    }
+  }
+}
+
+// 単一のコメントを `wp_insert_comment()` で挿入
+function itmar_post_single_comment($comment_data, $post_id, $override_flg)
+{
+  $comment_arr = array(
+    'comment_post_ID'      => intval($post_id),
+    'comment_author'       => $comment_data['comment_author'],
+    'comment_author_email' => $comment_data['comment_author_email'],
+    'comment_content'      => $comment_data['comment_content'],
+    'comment_date'         => $comment_data['comment_date'],
+    'comment_date_gmt'     => $comment_data['comment_date_gmt'],
+    'comment_karma'        => intval($comment_data['comment_karma']),
+    'comment_approved'     => intval($comment_data['comment_approved']),
+    'comment_type'         => $comment_data['comment_type'],
+    'comment_parent'       => intval($comment_data['comment_parent']), // ここで新しいIDが適用される
+    'user_id'              => intval($comment_data['user_id'])
+  );
+  if ($override_flg) {
+    $comment_arr["comment_ID"] = $comment_data['comment_ID'];
+    $new_comment_id = wp_update_comment($comment_arr);
+    if ($new_comment_id === 1) { //更新成功であれば、メタデータのコメントIDを更新結果に代入
+      $new_comment_id = $comment_data['comment_ID'];
+    }
+  } else {
+    $new_comment_id = wp_insert_comment($comment_arr);
+  }
+
+
+  if ($new_comment_id) {
+    //メタデータを update_comment_meta() を使うことで、既存のデータを上書き or 追加
+    if (!empty($comment_data['meta'])) {
+      foreach ($comment_data['meta'] as $meta_key => $meta_value) {
+        update_comment_meta($new_comment_id, $meta_key, $meta_value);
+      }
+    }
+  }
+  return $new_comment_id;
+}
 
 // JSONエクスポート処理
 function itmar_post_tranfer_export_json()
@@ -809,9 +991,35 @@ function itmar_post_tranfer_export_json()
     //個別選択のIDと統合
     $selected_posts = array_unique(array_merge($post_ids, $all_selected_posts));
 
-
     //カスタムフィールドの選択設定
     $include_custom_fields = isset($_POST['include_custom_fields']);
+    //リビジョンの選択設定
+    $include_revisions = isset($_POST['include_revisions']);
+    //コメントの選択設定
+    $include_comments = isset($_POST['include_comments']);
+
+    //リビジョンの取得（IDのみ）
+    if ($include_revisions) { //チェックを確認
+      $selected_posts_rev = array();
+      foreach ($selected_posts as $post_id) {
+        // 元の投稿IDを追加
+        $selected_posts_rev[] = $post_id;
+        $args = array(
+          'post_type'   => 'revision',
+          'post_status' => 'any',
+          'post_parent' => $post_id,
+          'numberposts' => -1, // すべての投稿を取得
+          'fields'         => 'ids' // ID のみ取得
+        );
+        $rev_ids = get_posts($args);
+        // リビジョンIDを追加（空でなければ）
+        if (!empty($rev_ids)) {
+          $selected_posts_rev = array_merge($selected_posts_rev, $rev_ids);
+        }
+      }
+      //$selected_posts に上書き
+      $selected_posts = $selected_posts_rev;
+    }
 
     //エクスポートディレクトリの設定
     $export_data = [];
@@ -841,7 +1049,10 @@ function itmar_post_tranfer_export_json()
           'date'          => $post->post_date,
           'modified'      => $post->post_modified,
           'author'        => get_the_author_meta('display_name', $post->post_author),
+          'post_name'     => $post->post_name,
           'post_type'     => $post->post_type,
+          'post_status'     => $post->post_status,
+          'post_parent'   => $post->post_parent,
           'thumbnail_url' => get_the_post_thumbnail_url($post->ID, 'full'), // 画像URL
           'thumbnail_path' => null, // 保存後の画像パス
           'terms'         => [] // タクソノミー情報を格納する配列
@@ -862,7 +1073,7 @@ function itmar_post_tranfer_export_json()
         }
 
         // カスタムフィールドを含める場合
-        if ($include_custom_fields) {
+        if ($include_custom_fields) { //チェックを確認
           //wp_postmetaから取り出す全ての関連データ
           $custom_fields = get_post_meta($post->ID);
 
@@ -915,6 +1126,12 @@ function itmar_post_tranfer_export_json()
               $post_data['custom_fields'][$key] = maybe_unserialize($value[0]);
             }
           }
+        }
+        //コメントを含める場合
+        if ($include_comments) { //チェックを確認
+          //コメントデータをメタデータを含めて取りだし
+          $comments = itmar_get_comments_with_meta($post->ID);
+          $post_data['comments'] = maybe_unserialize($comments);
         }
 
         // アイキャッチ画像のダウンロード処理
