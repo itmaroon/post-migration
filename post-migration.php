@@ -1,17 +1,25 @@
 <?php
 /*
-Plugin Name:  POST TRANSFER
-Description:  Provides the ability to export post data, including media in the media library, to a zip file and then import it.
+Plugin Name:  POST MIGRATION
+Description:  This plugin allows you to export post data along with associated media, revisions, and comments into a ZIP file and port it to another WordPress site.
 Version:      0.1.0
 Author:       Web Creator ITmaroon
 Author URI:   https://itmaroon.net
 License:      GPL v2 or later
 License URI:  https://www.gnu.org/licenses/gpl-2.0.html
-Text Domain:  post-transfer
+Text Domain:  post-migration
 Domain Path:  /languages
 */
 
 if (! defined('ABSPATH')) exit;
+
+//翻訳ファイルの読み込み
+function itmar_post_mi_textdomain()
+{
+  load_plugin_textdomain('post-migration', false, basename(dirname(__FILE__)) . '/languages');
+}
+add_action('init', 'itmar_post_mi_textdomain');
+
 
 //投稿タイプを取得する関数
 function itmar_get_post_type_label($post_type)
@@ -57,8 +65,8 @@ function itmar_post_tranfer_add_admin_menu()
 {
   // 親メニュー（ツールメニューの下に追加）
   add_menu_page(
-    'POST TRANSFER', // 設定画面のページタイトル.
-    'POST TRANSFER', // 管理画面メニューに表示される名前.
+    'POST MIGRATION', // 設定画面のページタイトル.
+    'POST MIGRATION', // 管理画面メニューに表示される名前.
     'manage_options',
     'itmar_post_tranfer_menu', // メニューのスラッグ.
     '', //コールバックは空
@@ -69,8 +77,8 @@ function itmar_post_tranfer_add_admin_menu()
   // 「インポート」サブメニュー
   add_submenu_page(
     'itmar_post_tranfer_menu',        // 親メニューのスラッグ
-    __('Import', 'post-transfer'),      // ページタイトル
-    __('import', 'post-transfer'),             // メニュータイトル
+    __('Import', 'post-migration'),      // ページタイトル
+    __('import', 'post-migration'),             // メニュータイトル
     'manage_options',         // 権限
     'itmar_post_tranfer_import',       // スラッグ
     'itmar_post_tranfer_import_page'   // コールバック関数
@@ -79,8 +87,8 @@ function itmar_post_tranfer_add_admin_menu()
   // 「エクスポート」サブメニュー
   add_submenu_page(
     'itmar_post_tranfer_menu',        // 親メニューのスラッグ
-    __('Export', 'post-transfer'),      // ページタイトル
-    __('export', 'post-transfer'),             // メニュータイトル
+    __('Export', 'post-migration'),      // ページタイトル
+    __('export', 'post-migration'),             // メニュータイトル
     'manage_options',         // 権限
     'itmar_post_tranfer_export',       // スラッグ
     'itmar_post_tranfer_export_page'   // コールバック関数
@@ -99,19 +107,19 @@ function itmar_post_tranfer_import_page()
 
   // 権限チェック.
   if (! current_user_can('manage_options')) {
-    wp_die(_e('You do not have sufficient permissions to access this page.', 'post-transfer'));
+    wp_die(_e('You do not have sufficient permissions to access this page.', 'post-migration'));
   }
 
 ?>
   <div class="wrap">
-    <h1><?php echo esc_html__("Post Data Import", "post-transfer"); ?></h1>
+    <h1><?php echo esc_html__("Post Data Import", "post-migration"); ?></h1>
     <form method="post" enctype="multipart/form-data">
       <?php wp_nonce_field('custom_import_action', 'custom_import_nonce'); ?>
 
       <!-- ZIP ファイル選択 -->
       <table class="form-table">
         <tr>
-          <th><label for="import_file"><?php echo esc_html__("ZIP file to import", "post-transfer"); ?></label></th>
+          <th><label for="import_file"><?php echo esc_html__("ZIP file to import", "post-migration"); ?></label></th>
           <td>
             <input type="file" name="import_file" id="import_file" accept=".zip" required>
           </td>
@@ -119,20 +127,20 @@ function itmar_post_tranfer_import_page()
 
         <!-- インポート方法選択 -->
         <tr>
-          <th><?php echo esc_html__("How to import", "post-transfer"); ?></th>
+          <th><?php echo esc_html__("How to import", "post-migration"); ?></th>
           <td>
             <label>
-              <input type="radio" name="import_mode" value="update" checked> <?php echo esc_html__("Override by ID", "post-transfer"); ?>
+              <input type="radio" name="import_mode" value="update" checked> <?php echo esc_html__("Override by ID", "post-migration"); ?>
             </label><br>
             <label>
-              <input type="radio" name="import_mode" value="create"> <?php echo esc_html__("Add new record", "post-transfer"); ?>
+              <input type="radio" name="import_mode" value="create"> <?php echo esc_html__("Add new record", "post-migration"); ?>
             </label>
           </td>
         </tr>
       </table>
 
       <p class="submit">
-        <input type="submit" name="submit_import" class="button button-primary" value="<?php echo esc_attr__("Start Import", "post-transfer"); ?>">
+        <input type="submit" name="submit_import" class="button button-primary" value="<?php echo esc_attr__("Start Import", "post-migration"); ?>">
       </p>
     </form>
     <?php itmar_post_tranfer_import_json(); ?>
@@ -150,7 +158,7 @@ function itmar_post_tranfer_export_page()
 
   // 権限チェック.
   if (! current_user_can('manage_options')) {
-    wp_die(_e('You do not have sufficient permissions to access this page.', 'post-transfer'));
+    wp_die(_e('You do not have sufficient permissions to access this page.', 'post-migration'));
   }
 
 ?>
@@ -162,19 +170,19 @@ function itmar_post_tranfer_export_page()
 
         <!-- ヘッダーを固定 -->
         <div class="fixed-header">
-          <h1><?php echo esc_html__("Post Data Custom Export", "post-transfer") ?></h1>
-          <p><?php echo esc_html__("Select the articles you want to export.") ?></p>
+          <h1><?php echo esc_html__("Post Data Custom Export", "post-migration") ?></h1>
+          <p><?php echo esc_html__("Select the articles you want to export.", "post-migration") ?></p>
           <label>
             <input type="checkbox" id="include_custom_fields" name="include_custom_fields" value="1">
-            <?php echo esc_html__("Include custom fields", "post-transfer") ?>
+            <?php echo esc_html__("Include custom fields", "post-migration") ?>
           </label>
           <label>
             <input type="checkbox" id="include_revisions" name="include_revisions" value="1">
-            <?php echo esc_html__("Include revisions", "post-transfer") ?>
+            <?php echo esc_html__("Include revisions", "post-migration") ?>
           </label>
           <label>
             <input type="checkbox" id="include_comments" name="include_comments" value="1">
-            <?php echo esc_html__("Include comments", "post-transfer") ?>
+            <?php echo esc_html__("Include comments", "post-migration") ?>
           </label>
         </div>
 
@@ -223,19 +231,19 @@ function itmar_post_tranfer_export_page()
           if ($posts) {
             echo "<h2>{$post_type->label}</h2>";
             // すべてのレコードを選択 チェックボックスを追加
-            echo "<label class='select-all-posts'><input type='checkbox' name='export_types[]' value='{$post_type->name}'>" . __(' Select all records', 'post-transfer') . "</label>";
+            echo "<label class='select-all-posts'><input type='checkbox' name='export_types[]' value='{$post_type->name}'>" . __(' Select all records', 'post-migration') . "</label>";
             // 投稿タイプに紐づくタクソノミーを取得（ヘッダー用）
             $taxonomies = get_object_taxonomies($post_type->name, 'objects');
             // **post_format を配列から削除**
             unset($taxonomies['post_format']);
             //投稿のテーブル
             echo "<table class='widefat striped'>";
-            echo "<thead><tr><th><input type='checkbox' id='select-all-{$post_type->name}'></th><th>" . __('Title', 'post-transfer') . "</th><th>" . __('Featured', 'post-transfer') . "</th>";
+            echo "<thead><tr><th><input type='checkbox' id='select-all-{$post_type->name}'></th><th>" . __('Title', 'post-migration') . "</th><th>" . __('Featured', 'post-migration') . "</th>";
             // タクソノミーごとにヘッダーを追加
             foreach ($taxonomies as $taxonomy) {
               echo "<th>{$taxonomy->label}</th>";
             }
-            echo "<th>" . __('Updated on', 'post-transfer') . "</th></tr></thead>";
+            echo "<th>" . __('Updated on', 'post-migration') . "</th></tr></thead>";
             echo "<tbody>";
 
             foreach ($posts as $post) {
@@ -247,7 +255,7 @@ function itmar_post_tranfer_export_page()
               echo "<tr>";
               echo "<td><input type='checkbox' name='export_posts[]' value='{$post->ID}'></td>";
               echo "<td>{$post->post_title}</td>";
-              echo "<td>" . ($thumbnail ?: __('None', 'post-transfer')) . "</td>";
+              echo "<td>" . ($thumbnail ?: __('None', 'post-migration')) . "</td>";
               // タクソノミーごとのタームを取得し、カンマ区切りで表示
               foreach ($taxonomies as $taxonomy) {
                 $terms = get_the_terms($post->ID, $taxonomy->name);
@@ -271,14 +279,14 @@ function itmar_post_tranfer_export_page()
 
               // 前のページ
               if ($current_page > 1) {
-                echo '<a class="button" href="?page=' . esc_attr($_GET['page']) . '&paged_' . $post_type->name . '=' . ($current_page - 1) . '">« ' . __('Before', 'post-transfer') . '</a>';
+                echo '<a class="button" href="?page=' . esc_attr($_GET['page']) . '&paged_' . $post_type->name . '=' . ($current_page - 1) . '">« ' . __('Before', 'post-migration') . '</a>';
               }
 
-              echo __('Page', 'post-transfer') . " {$current_page} / {$total_pages} ";
+              echo __('Page', 'post-migration') . " {$current_page} / {$total_pages} ";
 
               // 次のページ
               if ($current_page < $total_pages) {
-                echo '<a class="button" href="?page=' . esc_attr($_GET['page']) . '&paged_' . $post_type->name . '=' . ($current_page + 1) . '">' . __('Next', 'post-transfer') . '»</a>';
+                echo '<a class="button" href="?page=' . esc_attr($_GET['page']) . '&paged_' . $post_type->name . '=' . ($current_page + 1) . '">' . __('Next', 'post-migration') . '»</a>';
               }
 
               echo "</div></div>";
@@ -426,16 +434,22 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
   if (file_exists($dest_path)) {
     $attachment_id = itmar_get_attachment_id_by_file_path($dest_path);
     if ($attachment_id) {
-      return new WP_Error('file_exists', __("Processing stopped due to existing file found (media ID:", "post-transfer") . $attachment_id . ")");
+      return new WP_Error('file_exists', __("Processing stopped due to existing file found (media ID:", "post-migration") . $attachment_id . ")");
     }
   }
 
   // ZIP 内のファイルを展開
   if ($zip->locateName($file_path) !== false) {
+    // ZIPから抽出
     $zip->extractTo($extract_path, $file_path);
-    rename($extract_path . $file_path, $extract_path . basename($file_path)); // ZIPファイル内のフォルダから正しい位置に移動
+    // ZIP内のフォルダ構成がある場合、正しいパスに移動
+    $extracted_file = $extract_path . $file_path;
+    if (!file_exists($extracted_file)) {
+      return new WP_Error('extract_failed', __("Failed to extract the file from ZIP", "post-migration"));
+    }
+    rename($extracted_file, $dest_path);
   } else {
-    return new WP_Error('file_not_found', __("File not found in ZIP", "post-transfer"));
+    return new WP_Error('file_not_found', __("File not found in ZIP", "post-migration"));
   }
   // Windows のパス区切りを `/` に統一
   $dest_path = str_replace('\\', '/', $dest_path);
@@ -443,11 +457,14 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
   // 展開されたファイルがあるかチェック
   if (!file_exists($dest_path)) {
 
-    return new WP_Error('file_not_found', __("Unpacked image not found:", "post-transfer") . $dest_path);
+    return new WP_Error('file_not_found', __("Unpacked image not found:", "post-migration") . $dest_path);
   }
 
-  // WPメディアに登録
+  // 登録データを生成
   $filetype = wp_check_filetype($dest_path);
+  if (!$filetype['type']) {
+    return new WP_Error('invalid_file_type', __("Invalid file type:", "post-migration") . $dest_path);
+  }
   $attachment = array(
     'post_mime_type' => $filetype['type'],
     'post_title'     => sanitize_file_name(basename($dest_path)),
@@ -455,12 +472,18 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
     'post_status'    => 'inherit'
   );
 
+  // メディアライブラリに登録
   $attachment_id = wp_insert_attachment($attachment, $dest_path, $post_id);
+  if (is_wp_error($attachment_id)) {
+    return $attachment_id;
+  }
+
+  // メタデータの生成
   require_once(ABSPATH . 'wp-admin/includes/image.php');
   $attachment_data = wp_generate_attachment_metadata($attachment_id, $dest_path);
   // メタデータ更新前にファイルが存在するか確認
   if (!file_exists($dest_path)) {
-    return new WP_Error('file_not_found', __("File was deleted before metadata was updated:", "post-transfer") . $dest_path);
+    return new WP_Error('file_not_found', __("File was deleted before metadata was updated:", "post-migration") . $dest_path);
   }
 
 
@@ -473,15 +496,15 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
 //インポートの実行処理
 function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
 {
-  echo '<h2>' . __("Import Result", "post-transfer") . '</h2>';
+  echo '<h2>' . __("Import Result", "post-migration") . '</h2>';
   echo '<table class="widefat">';
-  echo '<thead><tr><th>#</th><th>' . __("Title", "post-transfer") . '</th><th>' . __("Post Type", "post-transfer") . '</th><th>' . __("Result", "post-transfer") . '</th></tr></thead>';
+  echo '<thead><tr><th>#</th><th>' . __("Title", "post-migration") . '</th><th>' . __("Post Type", "post-migration") . '</th><th>' . __("Result", "post-migration") . '</th></tr></thead>';
   echo '<tbody class="post_trns_tbody">';
 
   // ZIP ファイルを開く
   $zip = new ZipArchive;
   if ($zip->open($zip_path) !== true) {
-    echo '<div class="error"><p>' . __("Failed to extract ZIP file.", "post-transfer") . '</p></div>';
+    echo '<div class="error"><p>' . __("Failed to extract ZIP file.", "post-migration") . '</p></div>';
     return;
   }
   //インポートしたデータのIDを保存しておく変数
@@ -508,12 +531,12 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
 
     // 投稿タイプが登録されていない場合はスキップ
     if (!post_type_exists($post_type)) {
-      echo "<tr class='skip_line'><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>" . __("Skip (unregistered post type)", "post-transfer") . "</td></tr>";
+      echo "<tr class='skip_line'><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>" . __("Skip (unregistered post type)", "post-migration") . "</td></tr>";
     }
 
     //ID上書きのリビジョンデータはスキップ
     if ($post_id > 0 && get_post($post_id) && $import_mode === "update" && $post_type === "revision") {
-      echo "<tr class='skip_line'><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>" . __("Skip (Existing data available)", "post-transfer") . "</td></tr>";
+      echo "<tr class='skip_line'><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>" . __("Skip (Existing data available)", "post-migration") . "</td></tr>";
       continue;
     }
 
@@ -564,19 +587,19 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
       $post_data['ID'] = $post_id;
       $updated_post_id = wp_update_post($post_data, true);
       if (is_wp_error($updated_post_id)) {
-        $result = __("Error (update failed)", "post-transfer");
+        $result = __("Error (update failed)", "post-migration");
         $error_logs[] = "ID " . $post_id . ": " . $updated_post_id->get_error_message();
       } else {
-        $result = __("Overwrite successful", "post-transfer");
+        $result = __("Overwrite successful", "post-migration");
         $new_post_id = $updated_post_id;
       }
     } else {
       $new_post_id = wp_insert_post($post_data, true);
       if (is_wp_error($new_post_id)) {
-        $result = __("Error (addition failed)", "post-transfer");
+        $result = __("Error (addition failed)", "post-migration");
         $error_logs[] = "ID " . $post_id . ": " . $new_post_id->get_error_message();
       } else {
-        $result = __("Addition successful", "post-transfer");
+        $result = __("Addition successful", "post-migration");
       }
     }
 
@@ -687,7 +710,7 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
     <html lang='ja'>
     <head>
         <meta charset='UTF-8'>
-        <title>" . esc_html__("Post Data Import", "post-transfer") . "</title>
+        <title>" . esc_html__("Post Data Import", "post-migration") . "</title>
     </head>
     <body>
     <pre>" . implode("\n", $error_logs) . "</pre>
@@ -700,7 +723,7 @@ function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
     // ダウンロード用のURLを取得
     $log_file_url = wp_upload_dir()['url'] . "/error_log_{$filename}.html";
     //エラーログ表示のリンク
-    echo wp_kses_post("<div class='post_trns_link'><a href='{$log_file_url}' target='_blank'>" . esc_html__("Viewing Error Logs", "post-transfer") . "</a></div>");
+    echo wp_kses_post("<div class='post_trns_link'><a href='{$log_file_url}' target='_blank'>" . esc_html__("Viewing Error Logs", "post-migration") . "</a></div>");
   }
 
   $zip->close();
@@ -719,7 +742,7 @@ function itmar_post_tranfer_import_json()
 
   // ファイルが選択されていない場合はエラー
   if (empty($_FILES['import_file']['name'])) {
-    echo '<div class="error"><p>' . esc_html__("Select the ZIP file.", "post-transfer") . ' </p></div>';
+    echo '<div class="error"><p>' . esc_html__("Select the ZIP file.", "post-migration") . ' </p></div>';
     return;
   }
 
@@ -730,7 +753,7 @@ function itmar_post_tranfer_import_json()
 
   // ZIPファイルを一時ディレクトリに保存
   if (!move_uploaded_file($file['tmp_name'], $zip_path)) {
-    echo '<div class="error"><p>' . esc_html__("File upload failed.", "post-transfer") . '</p></div>';
+    echo '<div class="error"><p>' . esc_html__("File upload failed.", "post-migration") . '</p></div>';
     return;
   }
 
@@ -744,7 +767,7 @@ function itmar_post_tranfer_import_json()
     if ($zip->locateName($json_filename) !== false) {
       $zip->extractTo($upload_dir['path'], $json_filename);
     } else {
-      echo '<div class="error"><p>' . esc_html__("The ZIP file does not contain \"export_data.json\"", "post-transfer") . '</p></div>';
+      echo '<div class="error"><p>' . esc_html__("The ZIP file does not contain \"export_data.json\"", "post-migration") . '</p></div>';
       $zip->close();
       unlink($zip_path); // ZIP削除
       return;
@@ -760,15 +783,15 @@ function itmar_post_tranfer_import_json()
       if (!empty($decoded_data) && is_array($decoded_data)) {
         itmar_process_import_data($decoded_data, $zip_path, $import_mode);
       } else {
-        echo '<div class="error"><p>' . esc_html__("Failed to parse JSON data.", "post-transfer") . '</p></div>';
+        echo '<div class="error"><p>' . esc_html__("Failed to parse JSON data.", "post-migration") . '</p></div>';
       }
 
       unlink($json_path); // JSON削除
     } else {
-      echo '<div class="error"><p>' . esc_html__("I can't find the extracted JSON file.", "post-transfer") . '</p></div>';
+      echo '<div class="error"><p>' . esc_html__("I can't find the extracted JSON file.", "post-migration") . '</p></div>';
     }
   } else {
-    echo '<div class="error"><p>' . esc_html__("Failed to extract ZIP file.", "post-transfer") . '</p></div>';
+    echo '<div class="error"><p>' . esc_html__("Failed to extract ZIP file.", "post-migration") . '</p></div>';
   }
 
   unlink($zip_path); // ZIP削除
@@ -1022,7 +1045,7 @@ function itmar_post_tranfer_export_json()
     }
 
     //エクスポートディレクトリの設定
-    $export_data = [];
+    //$export_data = [];
     $upload_dir = wp_upload_dir();
     $save_folder = $upload_dir['basedir'] . '/exported_media/'; // 画像保存用ディレクトリ
 
@@ -1037,6 +1060,14 @@ function itmar_post_tranfer_export_json()
     if ($zip->open($zip_filename, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
       wp_die('ZIP ファイルを作成できませんでした');
     }
+
+    //JSON文字列を直接ファイルに書き込むためファイルを用意
+    $json_path = $upload_dir['basedir'] . '/export_data.json';
+    // ファイルを開く
+    $fp = fopen($json_path, 'w');
+    fwrite($fp, "[\n");
+    //ファイルの先頭であることを示すフラグ
+    $first = true;
 
     foreach ($selected_posts as $post_id) {
       $post = get_post($post_id);
@@ -1163,14 +1194,27 @@ function itmar_post_tranfer_export_json()
         }
         $post_data['content'] = $modified_content;
 
-        $export_data[] = $post_data;
+        //$export_data[] = $post_data;
+        // JSON に変換
+        $json_data = json_encode($post_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+        // JSON をファイルに追記（カンマ区切り）
+        if (!$first) {
+          fwrite($fp, ",\n");
+        }
+        fwrite($fp, $json_data);
+
+        $first = false; // 最初のデータ処理が終わったことを記録
       }
     }
+    // JSON 配列の閉じ
+    fwrite($fp, "\n]");
+    fclose($fp);
 
     // JSON を ZIP に追加
-    $json_data = json_encode($export_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    $json_path = $upload_dir['basedir'] . '/export_data.json';
-    file_put_contents($json_path, $json_data);
+    //$json_data = json_encode($export_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    //$json_path = $upload_dir['basedir'] . '/export_data.json';
+    //file_put_contents($json_path, $json_data);
     $zip->addFile($json_path, 'export_data.json');
 
     // ZIP を閉じる

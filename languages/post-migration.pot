@@ -1,0 +1,215 @@
+# Copyright (C) 2025 Web Creator ITmaroon
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: POST MIGRATION 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/post-migration\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-02-12T02:26:33+01:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.11.0\n"
+"X-Domain: post-migration\n"
+
+#. Plugin Name of the plugin
+#: post-migration.php
+msgid "POST MIGRATION"
+msgstr ""
+
+#. Description of the plugin
+#: post-migration.php
+msgid "This plugin allows you to export post data along with associated media, revisions, and comments into a ZIP file and port it to another WordPress site."
+msgstr ""
+
+#. Author of the plugin
+#: post-migration.php
+msgid "Web Creator ITmaroon"
+msgstr ""
+
+#. Author URI of the plugin
+#: post-migration.php
+msgid "https://itmaroon.net"
+msgstr ""
+
+#: post-migration.php:80
+msgid "Import"
+msgstr ""
+
+#: post-migration.php:81
+msgid "import"
+msgstr ""
+
+#: post-migration.php:90
+msgid "Export"
+msgstr ""
+
+#: post-migration.php:91
+msgid "export"
+msgstr ""
+
+#: post-migration.php:110
+#: post-migration.php:161
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+
+#: post-migration.php:115
+#: post-migration.php:698
+msgid "Post Data Import"
+msgstr ""
+
+#: post-migration.php:122
+msgid "ZIP file to import"
+msgstr ""
+
+#: post-migration.php:130
+msgid "How to import"
+msgstr ""
+
+#: post-migration.php:133
+msgid "Override by ID"
+msgstr ""
+
+#: post-migration.php:136
+msgid "Add new record"
+msgstr ""
+
+#: post-migration.php:143
+msgid "Start Import"
+msgstr ""
+
+#: post-migration.php:173
+msgid "Post Data Custom Export"
+msgstr ""
+
+#: post-migration.php:174
+msgid "Select the articles you want to export."
+msgstr ""
+
+#: post-migration.php:177
+msgid "Include custom fields"
+msgstr ""
+
+#: post-migration.php:181
+msgid "Include revisions"
+msgstr ""
+
+#: post-migration.php:185
+msgid "Include comments"
+msgstr ""
+
+#: post-migration.php:234
+msgid " Select all records"
+msgstr ""
+
+#: post-migration.php:241
+#: post-migration.php:486
+msgid "Title"
+msgstr ""
+
+#: post-migration.php:241
+msgid "Featured"
+msgstr ""
+
+#: post-migration.php:246
+msgid "Updated on"
+msgstr ""
+
+#: post-migration.php:258
+msgid "None"
+msgstr ""
+
+#: post-migration.php:282
+msgid "Before"
+msgstr ""
+
+#: post-migration.php:285
+msgid "Page"
+msgstr ""
+
+#: post-migration.php:289
+msgid "Next"
+msgstr ""
+
+#: post-migration.php:437
+msgid "Processing stopped due to existing file found (media ID:"
+msgstr ""
+
+#: post-migration.php:446
+msgid "File not found in ZIP"
+msgstr ""
+
+#: post-migration.php:454
+msgid "Unpacked image not found:"
+msgstr ""
+
+#: post-migration.php:471
+msgid "File was deleted before metadata was updated:"
+msgstr ""
+
+#: post-migration.php:484
+msgid "Import Result"
+msgstr ""
+
+#: post-migration.php:486
+msgid "Post Type"
+msgstr ""
+
+#: post-migration.php:486
+msgid "Result"
+msgstr ""
+
+#: post-migration.php:492
+#: post-migration.php:779
+msgid "Failed to extract ZIP file."
+msgstr ""
+
+#: post-migration.php:519
+msgid "Skip (unregistered post type)"
+msgstr ""
+
+#: post-migration.php:524
+msgid "Skip (Existing data available)"
+msgstr ""
+
+#: post-migration.php:575
+msgid "Error (update failed)"
+msgstr ""
+
+#: post-migration.php:578
+msgid "Overwrite successful"
+msgstr ""
+
+#: post-migration.php:584
+msgid "Error (addition failed)"
+msgstr ""
+
+#: post-migration.php:587
+msgid "Addition successful"
+msgstr ""
+
+#: post-migration.php:711
+msgid "Viewing Error Logs"
+msgstr ""
+
+#: post-migration.php:730
+msgid "Select the ZIP file."
+msgstr ""
+
+#: post-migration.php:741
+msgid "File upload failed."
+msgstr ""
+
+#: post-migration.php:755
+msgid "The ZIP file does not contain \"export_data.json\""
+msgstr ""
+
+#: post-migration.php:771
+msgid "Failed to parse JSON data."
+msgstr ""
+
+#: post-migration.php:776
+msgid "I can't find the extracted JSON file."
+msgstr ""

@@ -1,4 +1,4 @@
-=== POST TRANSFER ===
+=== POST MIGRATION ===
 Contributors: Web Creator ITmaroon
 Tags: post, duplicate, transfer, media
 Requires at least: 6.3
@@ -15,13 +15,13 @@ Translate the slug generated in Japanese into English and replace it with an app
 
 == Related Links ==
 
-* [Github](https://github.com/itmaroon/post-transfer)
+* [Github](https://github.com/itmaroon/post-migration)
 
 == Installation ==
 
 1. From the WP admin panel, click “Plugins” -> “Add new”.
-2. In the browser input box, type “POST TRANSFER”.
-3. Select the “POST TRANSFER” plugin and click “Install”.
+2. In the browser input box, type “POST MIGRATION”.
+3. Select the “POST MIGRATION” plugin and click “Install”.
 4. Activate the plugin.
 
 OR…
