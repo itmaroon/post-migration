@@ -51,8 +51,18 @@ function itmar_get_attachment_id_by_file_path($file_path)
 //CSS等の読込
 function itmar_post_tranfer_script_init()
 {
+  //独自CSSの読み込み
   $css_path = plugin_dir_path(__FILE__) . 'css/transfer.css';
   wp_enqueue_style('transfer_handle', plugins_url('/css/transfer.css', __FILE__), array(), filemtime($css_path), 'all');
+
+  // fflate ライブラリを読み込む
+  wp_enqueue_script(
+    'fflate_handle',
+    plugin_dir_url(__FILE__) . 'assets/js/fflate.min.js',
+    array(), // 依存関係なし
+    '0.8.2', // バージョン
+    true // フッターで読み込む
+  );
 }
 add_action('admin_enqueue_scripts', 'itmar_post_tranfer_script_init');
 
@@ -113,10 +123,8 @@ function itmar_post_tranfer_import_page()
 ?>
   <div class="wrap">
     <h1><?php echo esc_html__("Post Data Import", "post-migration"); ?></h1>
-    <form method="post" enctype="multipart/form-data">
-      <?php wp_nonce_field('custom_import_action', 'custom_import_nonce'); ?>
+    <form id="inportForm">
 
-      <!-- ZIP ファイル選択 -->
       <table class="form-table">
         <tr>
           <th><label for="import_file"><?php echo esc_html__("ZIP file to import", "post-migration"); ?></label></th>
@@ -143,9 +151,481 @@ function itmar_post_tranfer_import_page()
         <input type="submit" name="submit_import" class="button button-primary" value="<?php echo esc_attr__("Start Import", "post-migration"); ?>">
       </p>
     </form>
-    <?php itmar_post_tranfer_import_json(); ?>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        //Ajax送信先URL
+        let ajaxUrl = '<?php echo esc_url(admin_url('admin-ajax.php', __FILE__)); ?>';
+        //インポートモード
+        let import_mode = document.querySelector('input[name="import_mode"]:checked').value;
+        //リビジョンの親ID
+        let revParentID = null;
+        // ZIP 内のファイルを保存するグローバル変数
+        let zipFiles = {};
+        //ZIPファイルのリーダー
+        let reader = new FileReader();
+
+
+        // ファイル選択と処理のイベントリスナー
+        document.getElementById("inportForm").addEventListener("submit", async function(event) {
+          event.preventDefault();
+
+          let fileInput = document.getElementById("import_file");
+          if (fileInput.files.length === 0) {
+            alert("ZIPファイルを選択してください。");
+            return;
+          }
+
+          let file = fileInput.files[0];
+          reader.onload = function(event) {
+            let buffer = new Uint8Array(event.target.result);
+
+            // `fflate` を使って ZIP を解凍
+            fflate.unzip(buffer, (err, files) => {
+              if (err) {
+                console.error("ZIP 解凍エラー:", err);
+                return;
+              }
+
+              zipFiles = files; // グローバル変数に保存
+
+              // `export_data.json` を探す
+              const jsonFile = files["export_data.json"];
+              if (!jsonFile) {
+                alert("ZIP 内に 'export_data.json' が見つかりません。");
+                return;
+              }
+
+              // JSON を文字列に変換
+              let jsonText = fflate.strFromU8(jsonFile);
+              //オブジェクト単位の文字列として生成
+              processLargeJSON(jsonText);
+            });
+          };
+          reader.readAsArrayBuffer(file);
+
+        });
+
+        //オブジェクトの生成
+        async function processLargeJSON(jsonText) {
+          let lines = jsonText.split("\n");
+          let currentObject = "";
+          let objectStart = false;
+
+          for (let line of lines) {
+            let firstChar = line[0];
+
+            if (firstChar === "{") {
+              if (objectStart) {
+                let sendObject = JSON.parse(currentObject);
+                await sendFetchData(sendObject, revParentID, import_mode);
+              }
+              currentObject = line;
+              objectStart = true;
+            } else if (firstChar === "}") {
+              line = line.replace(/},$/, "}"); // `},` の `,` を削除
+              currentObject += line;
+              objectStart = false;
+              let sendObject = JSON.parse(currentObject);
+              await sendFetchData(sendObject, revParentID, import_mode);
+            } else if (objectStart) {
+              currentObject += line;
+            }
+          }
+        }
+
+        async function extractMediaUpload(mediaPath, postID, mediaType) {
+          if (!zipFiles || Object.keys(zipFiles).length === 0) {
+            console.error("ZIP ファイルがまだロードされていません。");
+            return;
+          }
+
+          // 指定されたパスのファイルを探す
+          const matchingFile = Object.keys(zipFiles).find((fileName) =>
+            fileName.includes(mediaPath)
+          );
+          if (!matchingFile) {
+            console.error("指定されたパスのファイルが ZIP 内に見つかりません。");
+            return;
+          }
+          // ファイルのバイナリデータを取得
+          const fileData = zipFiles[matchingFile];
+
+          // Base64 へ変換
+          const base64String = btoa(String.fromCharCode(...fileData));
+
+          // URL エンコード用のデータを作成
+          const params = new URLSearchParams();
+          params.append("action", "post_media_fetch"); // WordPress 側の処理名
+          params.append('nonce', '<?php echo wp_create_nonce('itmar-ajax-nonce'); ?>');
+          params.append("filepath", matchingFile);
+          params.append("postID", postID);
+          params.append("mediaType", mediaType);
+          params.append("filedata", base64String);
+
+          // サーバーへアップロード
+          try {
+            const response = await fetch(ajaxUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: params.toString(),
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json(); // ✅ **PHP からの戻り値を受け取る**
+            console.log("受信したメディア:", data);
+
+          } catch (error) {
+            console.error('Fetch error:', error);
+
+          }
+        }
+
+        async function sendFetchData(postData, parentID, import_mode) {
+          const formData = new URLSearchParams();
+          formData.append('action', 'post_data_fetch');
+          formData.append('nonce', '<?php echo wp_create_nonce('itmar-ajax-nonce'); ?>');
+          formData.append('post_data', JSON.stringify(postData));
+          formData.append('parent_id', parentID);
+          formData.append('import_mode', import_mode);
+
+          // postDataの中身をformDataに追加する例
+          try {
+            const response = await fetch(ajaxUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: formData,
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json(); // ✅ **PHP からの戻り値を受け取る**
+            console.log("受信したデータ:", data);
+            //リビジョン以外の成功データの時はrevParentIDを更新
+            if (data.result != "revison" && data.result != "error") {
+              revParentID = data.parentID;
+            }
+            //メディアデータの送信
+            if (data.thumbnail) {
+              extractMediaUpload(data.thumbnail, data.id, 'thumbnail');
+            }
+            //本文内のメディア
+            if (data.content_medias) {
+              data.content_medias.forEach((mediaPath) => {
+                extractMediaUpload(mediaPath, data.id, 'content');
+              })
+
+            }
+          } catch (error) {
+            console.error('Fetch error:', error);
+
+          }
+        }
+      });
+    </script>
+
   </div>
 <?php
+}
+
+function itmar_post_data_fetch()
+{
+  // WordPress の nonce チェック（セキュリティ対策）
+  check_ajax_referer('itmar-ajax-nonce', 'nonce');
+  // **JSON をデコード**
+  $post_data = json_decode(stripslashes($_POST['post_data']), true);
+
+  // **デコードエラーチェック**
+  if (!is_array($post_data) || empty($post_data)) {
+    wp_send_json_error(["message" => "無効なデータ"]);
+    exit;
+  }
+  $parent_id = isset($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
+  $import_mode = isset($_POST['import_mode']) ? sanitize_text_field($_POST['import_mode']) : "update"; // デフォルト: update
+
+  $result = itmar_json_import_data($post_data, $parent_id, $import_mode);
+  wp_send_json($result);
+}
+
+add_action('wp_ajax_post_data_fetch', 'itmar_post_data_fetch');
+add_action('wp_ajax_nopriv_post_data_fetch', 'itmar_post_data_fetch');
+
+function itmar_post_media_fetch()
+{
+  // WordPress の nonce チェック（セキュリティ対策）
+  check_ajax_referer('itmar-ajax-nonce', 'nonce');
+
+  if (!isset($_POST['filepath']) || !isset($_POST['filedata'])) {
+    wp_send_json_error("必要なデータがありません。");
+  }
+  // **フルパスからファイル名のみ取得**
+  $filepath = sanitize_text_field($_POST['filepath']);
+  $filename = basename($filepath);
+  // ファイル名が無効ならエラー
+  if (empty($filename) || strpos($filename, '..') !== false) {
+    wp_send_json_error(array("message" => "無効なファイル名です。"));
+  }
+  $filedata = base64_decode($_POST['filedata']);
+  $media_type = sanitize_text_field($_POST['mediaType']);
+  $post_id = isset($_POST['postID']) ? absint($_POST['postID']) : 0;
+
+  // アップロードフォルダのパスを取得
+  $upload_dir = wp_upload_dir();
+  $extract_path = trailingslashit($upload_dir['path']);
+  $dest_path = $extract_path . $filename;
+
+  // すでに同じファイルがある場合は処理を終了
+  if (file_exists($dest_path)) {
+    $attachment_id = itmar_get_attachment_id_by_file_path($dest_path);
+    if ($attachment_id) {
+      $response = array([
+        'success' => true,
+        'message' => __("Processing stopped due to existing file found (media ID:", "post-migration") . $attachment_id . ")",
+        'attachment_id' => $attachment_id
+      ]);
+    }
+  } else {
+    //ファイルを保存してメディアライブラリに登録
+    if (file_put_contents($dest_path, $filedata) !== false) {
+      // メディアライブラリに登録
+      $filetype = wp_check_filetype($filename, null);
+      $attachment = array(
+        'post_mime_type' => $filetype['type'],
+        'post_title'     => sanitize_file_name($filename),
+        'post_content'   => '',
+        'post_status'    => 'inherit'
+      );
+      //他のサイズのファイル生成とメタデータの生成
+      $attach_id = wp_insert_attachment($attachment, $dest_path);
+      require_once(ABSPATH . 'wp-admin/includes/image.php');
+      $attach_data = wp_generate_attachment_metadata($attach_id, $file_path);
+      wp_update_attachment_metadata($attach_id, $attach_data);
+
+      // 成功時のレスポンス
+      $response = array(
+        "message"    => "ファイルがアップロードされました。",
+        "filename"   => $filename,
+        "file_url"   => $upload_dir['url'] . '/' . $filename,
+        "attach_id"  => $attach_id
+      );
+    } else {
+      //wp_send_json_error(array("message" => "ファイルの保存に失敗しました。"));
+    }
+  }
+  //投稿データにメディア情報を反映
+  if ($attachment_id) {
+    if ($media_type === 'thumbnail') { //メディアがアイキャッチ画像のとき
+      set_post_thumbnail($post_id, $attachment_id);
+    } else if ($media_type === 'content') {
+      //改めて$attachment_idからメディアのurlを取得
+      $attachment_url = wp_get_attachment_url($attachment_id);
+      //投稿本文を取得
+      $post = get_post($post_id);
+      //本文内の$media_urlとアタッチメントIDで取得したURLを置換
+      $updated_content = str_replace($filepath, $attachment_url, $post->post_content);
+      // 投稿を更新
+      $update_data = array(
+        'ID'           => $post_id,
+        'post_content' => wp_slash($updated_content),
+      );
+
+      wp_update_post($update_data, true);
+    } else if ($media_type === 'acf_field') {
+    }
+  }
+  wp_send_json(array(
+    "message" => $post_id . "が更新されました。" . $media_type,
+    "attachment_id" => $attachment_id,
+  ));
+}
+
+add_action('wp_ajax_post_media_fetch', 'itmar_post_media_fetch');
+add_action('wp_ajax_nopriv_post_media_fetch', 'itmar_post_media_fetch');
+
+
+//インポートの実行処理
+function itmar_json_import_data($entry, $parent_id, $import_mode)
+{
+
+  //JSONのデコード結果から情報を取り出し
+  $post_id = isset($entry['ID']) ? intval($entry['ID']) : 0;
+  $post_title = isset($entry['title']) ? esc_html($entry['title']) : '';
+  $post_type = isset($entry['post_type']) ? esc_html($entry['post_type']) : '';
+  $post_status = isset($entry['post_status']) ? esc_html($entry['post_status']) : '';
+  $post_date = isset($entry['date']) ? $entry['date'] : current_time('mysql');
+  $post_modified = isset($entry['modified']) ? $entry['modified'] : current_time('mysql');
+  $post_author = isset($entry['author']) ? get_user_by('login', $entry['author'])->ID ?? 1 : 1;
+  $post_name = isset($entry['post_name']) ? esc_html($entry['post_name']) : '';
+  $thumbnail_path = $entry['thumbnail_path'] ?? null;
+  //エラーログ
+  $error_logs[] = "==={$post_title}(ID:{$post_id} TYPE:{$post_type})===";
+  //実行結果
+  $result_arr = [];
+
+  // 投稿タイプが登録されていない場合はスキップ
+  if (!post_type_exists($post_type)) {
+    $result_arr = [
+      'result' => 'error',
+      'id' => null,
+      'parentID' => $parent_id,
+      'message' => __("Skip (unregistered post type)", "post-migration"),
+      'log' => $error_logs
+    ];
+    return $result_arr;
+  }
+
+  //ID上書きのリビジョンデータはスキップ
+  if ($post_id > 0 && get_post($post_id) && $import_mode === "update" && $post_type === "revision") {
+    $result_arr = [
+      'result' => 'revision',
+      'id' => null,
+      'parentID' => $parent_id,
+      'message' => __("Skip (Existing data available)", "post-migration"),
+      'log' => $error_logs
+    ];
+    return $result_arr;
+  }
+
+  //投稿本文内のメディアファイルのパスを配列にする
+  $post_content = $entry['content'] ?? '';
+  $content_mediaURLs = [];
+  if (isset($post_content)) {
+    $matches = [];
+    preg_match_all('/exported_media\/(.+?\.[a-zA-Z0-9]+)/u', $post_content, $matches);
+    $content_mediaURLs = $matches[0] ?? []; // `matches[0]` にフルパス名が格納される
+  }
+
+  // 投稿データ
+  $post_data = array(
+    'post_title'   => $post_title,
+    'post_content' => wp_slash($post_content),
+    'post_excerpt' => $entry['excerpt'] ?? '',
+    'post_status'  => $post_status,
+    'post_type'    => $post_type,
+    'post_date'     => $post_date,
+    'post_modified' => $post_modified,
+    'post_author'   => $post_author,
+  );
+  //revisionレコードの場合
+  if ($parent_id != 0 && $post_type === "revision") {
+    $post_data["post_parent"] = $parent_id;
+    $post_data['post_name'] = "{$parent_id}-revision-v1"; // 一意なリビジョン名
+  } else {
+    $post_data['post_name'] = $post_name;
+  }
+
+  // インポートモードがupdateで、既存投稿があれば上書き、なければ新規追加
+  if ($post_id > 0 && get_post($post_id) && $import_mode === "update") {
+    $post_data['ID'] = $post_id;
+    $updated_post_id = wp_update_post($post_data, true);
+    if (is_wp_error($updated_post_id)) {
+      $result = __("Error (update failed)", "post-migration");
+      $error_logs[] = "ID " . $post_id . ": " . $updated_post_id->get_error_message();
+    } else {
+      $result = __("Overwrite successful", "post-migration");
+      $new_post_id = $updated_post_id;
+    }
+  } else {
+    $new_post_id = wp_insert_post($post_data, true);
+    if (is_wp_error($new_post_id)) {
+      $result = __("Error (addition failed)", "post-migration");
+      $error_logs[] = "ID " . $post_id . ": " . $new_post_id->get_error_message();
+    } else {
+      $result = __("Addition successful", "post-migration");
+    }
+  }
+
+  //親データとしてIDをキープ
+  if ($post_status != "inherit") {
+    $parent_id = $new_post_id;
+  }
+
+
+  //投稿データのインポート終了後
+  if ($new_post_id && !is_wp_error($new_post_id)) {
+    // **ターム（カテゴリー・タグ・カスタム分類）を登録**
+    foreach ($entry['terms'] as $taxonomy => $terms) {
+      $tax_result = wp_set_object_terms($new_post_id, $terms, $taxonomy);
+      //エラーの場合はエラーを記録
+      if (is_wp_error($tax_result)) {
+        $error_logs[] = "ID " . $new_post_id . ": " . $tax_result->get_error_message() . " (タクソノミー: {$taxonomy})";
+      }
+    }
+
+    //カスタムフィールドのインポート
+    if (isset($entry['custom_fields'])) {
+      foreach ($entry['custom_fields'] as $field => $value) {
+        update_post_meta($new_post_id, $field, $value);
+      }
+    }
+    //acfフィールドのインポート
+    if (isset($entry['acf_fields'])) {
+      if (itmar_is_acf_active()) { //acfのインストールチェック
+        $acf_fields = $entry['acf_fields'];
+        $acf_mediaURLs = [];
+        //メディアフィールドを探索し、メディアのURLを配列に格納
+        foreach ($acf_fields as $key => $value) {
+          if (preg_match('/exported_media\/(.+?\.[a-zA-Z0-9]+)/u', $value, $matches)) { //メディアフィールド
+            $acf_mediaURLs[] = $matches[0];
+          }
+        }
+        $group_fields = []; // グループフィールドを格納する配列
+
+        foreach ($acf_fields as $key => $value) {
+          // グループのプレフィックスを探す
+          if ($value === '_group') {
+            $group_prefix = $key . '_'; // グループのプレフィックス
+            $group_fields[$key] = []; // グループフィールドの配列を初期化
+
+            // グループ要素を抽出
+            foreach ($acf_fields as $sub_key => $sub_value) {
+              if (strpos($sub_key, $group_prefix) === 0) {
+                $sub_field_key = str_replace($group_prefix, '', $sub_key);
+                $group_fields[$key][$sub_field_key] = $sub_value;
+              }
+            }
+          }
+        }
+
+        // 通常のフィールドを更新
+        foreach ($acf_fields as $key => $value) {
+          if ($value === '_group') {
+            continue; // グループ要素はここでは処理しない
+          }
+          update_field($key, $value, $new_post_id);
+        }
+
+        // グループフィールドを更新
+        foreach ($group_fields as $group_key => $group_value) {
+          update_field($group_key, $group_value, $new_post_id);
+        }
+      } else {
+        $error_logs[] = "ID " . $new_post_id . ": ACFまたはSCFがインストールされていません。";
+      }
+    }
+    //コメントのインポート
+    if (isset($entry['comments'])) {
+      itmar_insert_comments_with_meta($entry['comments'], $new_post_id, $import_mode === "update");
+    }
+  }
+
+  $result_arr = [
+    'result' => $post_type,
+    'id' => $new_post_id,
+    'parentID' => $parent_id,
+    'message' => $result,
+    'content_medias' => $content_mediaURLs,
+    'acf_medias' => $acf_mediaURLs,
+    'thumbnail' => $thumbnail_path,
+    'log' => $error_logs
+  ];
+  return $result_arr;
 }
 
 
@@ -434,7 +914,11 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
   if (file_exists($dest_path)) {
     $attachment_id = itmar_get_attachment_id_by_file_path($dest_path);
     if ($attachment_id) {
-      return new WP_Error('file_exists', __("Processing stopped due to existing file found (media ID:", "post-migration") . $attachment_id . ")");
+      return [
+        'success' => true,
+        'message' => __("Processing stopped due to existing file found (media ID:", "post-migration") . $attachment_id . ")",
+        'attachment_id' => $attachment_id
+      ];
     }
   }
 
@@ -494,240 +978,224 @@ function itmar_import_thumbnail_from_zip($zip, $file_path, $post_id)
 
 
 //インポートの実行処理
-function itmar_process_import_data($decoded_data, $zip_path, $import_mode)
+function itmar_process_import_data($entry, $zip, $parent_id, $import_mode)
 {
-  echo '<h2>' . __("Import Result", "post-migration") . '</h2>';
-  echo '<table class="widefat">';
-  echo '<thead><tr><th>#</th><th>' . __("Title", "post-migration") . '</th><th>' . __("Post Type", "post-migration") . '</th><th>' . __("Result", "post-migration") . '</th></tr></thead>';
-  echo '<tbody class="post_trns_tbody">';
 
-  // ZIP ファイルを開く
-  $zip = new ZipArchive;
-  if ($zip->open($zip_path) !== true) {
-    echo '<div class="error"><p>' . __("Failed to extract ZIP file.", "post-migration") . '</p></div>';
-    return;
+  //JSONのデコード結果から情報を取り出し
+  $post_id = isset($entry['ID']) ? intval($entry['ID']) : 0;
+  $post_title = isset($entry['title']) ? esc_html($entry['title']) : '';
+  $post_type = isset($entry['post_type']) ? esc_html($entry['post_type']) : '';
+  $post_status = isset($entry['post_status']) ? esc_html($entry['post_status']) : '';
+  $post_date = isset($entry['date']) ? $entry['date'] : current_time('mysql');
+  $post_modified = isset($entry['modified']) ? $entry['modified'] : current_time('mysql');
+  $post_author = isset($entry['author']) ? get_user_by('login', $entry['author'])->ID ?? 1 : 1;
+  $post_name = isset($entry['post_name']) ? esc_html($entry['post_name']) : '';
+  $thumbnail_path = $entry['thumbnail_path'] ?? null;
+
+  $error_logs[] = "==={$post_title}(ID:{$post_id} TYPE:{$post_type})===";
+  $result_arr = [];
+
+  // 投稿タイプが登録されていない場合はスキップ
+  if (!post_type_exists($post_type)) {
+    $result_arr = [
+      'result' => 'error',
+      'id' => null,
+      'parentID' => $parent_id,
+      'message' => __("Skip (unregistered post type)", "post-migration"),
+      'log' => $error_logs
+    ];
+    return $result_arr;
   }
-  //インポートしたデータのIDを保存しておく変数
-  $parent_id = 0;
 
-  //エラーログ
-  $error_logs = [];
+  //ID上書きのリビジョンデータはスキップ
+  if ($post_id > 0 && get_post($post_id) && $import_mode === "update" && $post_type === "revision") {
+    $result_arr = [
+      'result' => 'revision',
+      'id' => null,
+      'parentID' => $parent_id,
+      'message' => __("Skip (Existing data available)", "post-migration"),
+      'log' => $error_logs
+    ];
+    return $result_arr;
+  }
 
-  //インポートのループ
-  foreach ($decoded_data as $index => $entry) {
-    //JSONのデコード結果から情報を取り出し
-    $post_id = isset($entry['ID']) ? intval($entry['ID']) : 0;
-    $post_title = isset($entry['title']) ? esc_html($entry['title']) : '';
-    $post_type = isset($entry['post_type']) ? esc_html($entry['post_type']) : '';
-    $post_status = isset($entry['post_status']) ? esc_html($entry['post_status']) : '';
-    $post_date = isset($entry['date']) ? $entry['date'] : current_time('mysql');
-    $post_modified = isset($entry['modified']) ? $entry['modified'] : current_time('mysql');
-    $post_author = isset($entry['author']) ? get_user_by('login', $entry['author'])->ID ?? 1 : 1;
-    $post_parent = isset($entry['post_parent']) ? intval($entry['ID']) : 0;
-    $post_name = isset($entry['post_name']) ? esc_html($entry['post_name']) : '';
-    $thumbnail_path = $entry['thumbnail_path'] ?? null;
+  //投稿本文内のメディアファイルのパスを配列にする
+  $post_content = $entry['content'] ?? '';
+  $content_mediaURLs = [];
+  if (isset($post_content)) {
+    $matches = [];
+    preg_match_all('/exported_media\/(.+?\.[a-zA-Z0-9]+)/u', $post_content, $matches);
+    $content_mediaURLs = $matches[0] ?? []; // `matches[0]` にフルパス名が格納される
+  }
 
-    $error_logs[] = "==={$post_title}(ID:{$post_id} TYPE:{$post_type})===";
+  // 本文内画像のインポートと本文の修正
+  foreach ($content_mediaURLs as $media_url) {
+    $attachment = itmar_import_thumbnail_from_zip($zip, $media_url, 0);
 
-    // 投稿タイプが登録されていない場合はスキップ
-    if (!post_type_exists($post_type)) {
-      echo "<tr class='skip_line'><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>" . __("Skip (unregistered post type)", "post-migration") . "</td></tr>";
-    }
-
-    //ID上書きのリビジョンデータはスキップ
-    if ($post_id > 0 && get_post($post_id) && $import_mode === "update" && $post_type === "revision") {
-      echo "<tr class='skip_line'><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>" . __("Skip (Existing data available)", "post-migration") . "</td></tr>";
-      continue;
-    }
-
-    //投稿本文内のメディアファイルのパスを配列にする
-    $post_content = $entry['content'] ?? '';
-    $content_mediaURLs = [];
-    if (isset($post_content)) {
-      $matches = [];
-      preg_match_all('/exported_media\/(.+?\.[a-zA-Z0-9]+)/u', $post_content, $matches);
-      $content_mediaURLs = $matches[0] ?? []; // `matches[0]` にフルパス名が格納される
-    }
-
-    // 本文内画像のインポートと本文の修正
-    foreach ($content_mediaURLs as $media_url) {
-      $attachment_id = itmar_import_thumbnail_from_zip($zip, $media_url, 0);
+    if (!is_wp_error($attachment)) {
+      if (is_array($attachment)) { //既にメディアがあった場合
+        $attachment_url = wp_get_attachment_url($attachment['attachment_id']);
+        $error_logs[] = $attachment['message'];
+      } else { //新しくメディアを追加した場合
+        $attachment_url = wp_get_attachment_url($attachment);
+      }
       //本文内の$media_urlとアタッチメントIDで取得したURLを置換
-      if (!is_wp_error($attachment_id)) {
-        $attachment_url = wp_get_attachment_url($attachment_id);
-        $post_content = str_replace($media_url, $attachment_url, $post_content);
-      } else {
-        $error_logs[] = $attachment_id->get_error_message();
-      }
-    }
-
-    // 投稿データ
-    $post_data = array(
-      'post_title'   => $post_title,
-      'post_content' => wp_slash($post_content),
-      'post_excerpt' => $entry['excerpt'] ?? '',
-      'post_status'  => $post_status,
-      'post_type'    => $post_type,
-      'post_date'     => $post_date,
-      'post_modified' => $post_modified,
-      'post_author'   => $post_author,
-    );
-    //revisionレコードの場合
-    if ($parent_id != 0 && $post_type === "revision") {
-      $post_data["post_parent"] = $parent_id;
-      $post_data['post_name'] = "{$parent_id}-revision-v1"; // 一意なリビジョン名
+      $post_content = str_replace($media_url, $attachment_url, $post_content);
     } else {
-      $post_data['post_name'] = $post_name;
+      $error_logs[] = $attachment->get_error_message();
     }
+  }
 
+  // 投稿データ
+  $post_data = array(
+    'post_title'   => $post_title,
+    'post_content' => wp_slash($post_content),
+    'post_excerpt' => $entry['excerpt'] ?? '',
+    'post_status'  => $post_status,
+    'post_type'    => $post_type,
+    'post_date'     => $post_date,
+    'post_modified' => $post_modified,
+    'post_author'   => $post_author,
+  );
+  //revisionレコードの場合
+  if ($parent_id != 0 && $post_type === "revision") {
+    $post_data["post_parent"] = $parent_id;
+    $post_data['post_name'] = "{$parent_id}-revision-v1"; // 一意なリビジョン名
+  } else {
+    $post_data['post_name'] = $post_name;
+  }
 
-
-    // インポートモードがupdateで、既存投稿があれば上書き、なければ新規追加
-    if ($post_id > 0 && get_post($post_id) && $import_mode === "update") {
-      $post_data['ID'] = $post_id;
-      $updated_post_id = wp_update_post($post_data, true);
-      if (is_wp_error($updated_post_id)) {
-        $result = __("Error (update failed)", "post-migration");
-        $error_logs[] = "ID " . $post_id . ": " . $updated_post_id->get_error_message();
-      } else {
-        $result = __("Overwrite successful", "post-migration");
-        $new_post_id = $updated_post_id;
-      }
+  // インポートモードがupdateで、既存投稿があれば上書き、なければ新規追加
+  if ($post_id > 0 && get_post($post_id) && $import_mode === "update") {
+    $post_data['ID'] = $post_id;
+    $updated_post_id = wp_update_post($post_data, true);
+    if (is_wp_error($updated_post_id)) {
+      $result = __("Error (update failed)", "post-migration");
+      $error_logs[] = "ID " . $post_id . ": " . $updated_post_id->get_error_message();
     } else {
-      $new_post_id = wp_insert_post($post_data, true);
-      if (is_wp_error($new_post_id)) {
-        $result = __("Error (addition failed)", "post-migration");
-        $error_logs[] = "ID " . $post_id . ": " . $new_post_id->get_error_message();
-      } else {
-        $result = __("Addition successful", "post-migration");
+      $result = __("Overwrite successful", "post-migration");
+      $new_post_id = $updated_post_id;
+    }
+  } else {
+    $new_post_id = wp_insert_post($post_data, true);
+    if (is_wp_error($new_post_id)) {
+      $result = __("Error (addition failed)", "post-migration");
+      $error_logs[] = "ID " . $post_id . ": " . $new_post_id->get_error_message();
+    } else {
+      $result = __("Addition successful", "post-migration");
+    }
+  }
+
+  //親データとしてIDをキープ
+  if ($post_status != "inherit") {
+    $parent_id = $new_post_id;
+  }
+
+
+  //投稿データのインポート終了後
+  if ($new_post_id && !is_wp_error($new_post_id)) {
+    // **ターム（カテゴリー・タグ・カスタム分類）を登録**
+    foreach ($entry['terms'] as $taxonomy => $terms) {
+      $tax_result = wp_set_object_terms($new_post_id, $terms, $taxonomy);
+      //エラーの場合はエラーを記録
+      if (is_wp_error($tax_result)) {
+        $error_logs[] = "ID " . $new_post_id . ": " . $tax_result->get_error_message() . " (タクソノミー: {$taxonomy})";
       }
     }
-
-    //親データとしてIDをキープ
-    if ($post_status != "inherit") {
-      $parent_id = $new_post_id;
-    }
-
-
-    //投稿データのインポート終了後
-    if ($new_post_id && !is_wp_error($new_post_id)) {
-      // **ターム（カテゴリー・タグ・カスタム分類）を登録**
-      foreach ($entry['terms'] as $taxonomy => $terms) {
-        $tax_result = wp_set_object_terms($new_post_id, $terms, $taxonomy);
-        //エラーの場合はエラーを記録
-        if (is_wp_error($tax_result)) {
-          $error_logs[] = "ID " . $new_post_id . ": " . $tax_result->get_error_message() . " (タクソノミー: {$taxonomy})";
-        }
-      }
-      if (!empty($thumbnail_path)) {
-        // アイキャッチ画像のインポートと設定
-        $attachment_id = itmar_import_thumbnail_from_zip($zip, $thumbnail_path, $new_post_id);
-        if (!is_wp_error($attachment_id)) {
-          set_post_thumbnail($new_post_id, $attachment_id);
+    if (!empty($thumbnail_path)) {
+      // アイキャッチ画像のインポートと設定
+      $attachment = itmar_import_thumbnail_from_zip($zip, $thumbnail_path, $new_post_id);
+      if (!is_wp_error($attachment)) {
+        if (is_array($attachment)) {
+          set_post_thumbnail($new_post_id, $attachment['attachment_id']);
+          $error_logs[] = $attachment['message'];
         } else {
-          $error_logs[] = $attachment_id->get_error_message();
+          set_post_thumbnail($new_post_id, $attachment);
         }
+      } else {
+        $error_logs[] = $attachment->get_error_message();
       }
+    }
 
-      //カスタムフィールドのインポート
-      if (isset($entry['custom_fields'])) {
-        foreach ($entry['custom_fields'] as $field => $value) {
-          update_post_meta($new_post_id, $field, $value);
-        }
+    //カスタムフィールドのインポート
+    if (isset($entry['custom_fields'])) {
+      foreach ($entry['custom_fields'] as $field => $value) {
+        update_post_meta($new_post_id, $field, $value);
       }
-      //acfフィールドのインポート
-      if (isset($entry['acf_fields'])) {
-        if (itmar_is_acf_active()) { //acfのインストールチェック
-          $acf_fields = $entry['acf_fields'];
+    }
+    //acfフィールドのインポート
+    if (isset($entry['acf_fields'])) {
+      if (itmar_is_acf_active()) { //acfのインストールチェック
+        $acf_fields = $entry['acf_fields'];
 
-          //メディアフィールドを探索し、メディアをアップロードしてフィールド値をidで置き換え
-          foreach ($acf_fields as $key => $value) {
-            if (preg_match('/exported_media\/(.+?\.[a-zA-Z0-9]+)/u', $value, $matches)) { //メディアフィールド
-              $attachment_id = itmar_import_thumbnail_from_zip($zip, $matches[0], $new_post_id);
-              //本文内の$media_urlとアタッチメントIDで取得したURLを置換
-              if (!is_wp_error($attachment_id)) {
-                $acf_fields[$key] = $attachment_id;
+        //メディアフィールドを探索し、メディアをアップロードしてフィールド値をidで置き換え
+        foreach ($acf_fields as $key => $value) {
+          if (preg_match('/exported_media\/(.+?\.[a-zA-Z0-9]+)/u', $value, $matches)) { //メディアフィールド
+            $attachment = itmar_import_thumbnail_from_zip($zip, $matches[0], $new_post_id);
+            //本文内の$media_urlとアタッチメントIDで取得したURLを置換
+            if (!is_wp_error($attachment)) {
+              if (is_array($attachment)) {
+                $acf_fields[$key] = $attachment['attachment_id'];
+                $error_logs[] = $attachment['message'];
               } else {
-                $error_logs[] = $attachment_id->get_error_message();
+                $acf_fields[$key] = $attachment;
               }
+            } else {
+              $error_logs[] = $attachment->get_error_message();
             }
           }
-
-          $group_fields = []; // グループフィールドを格納する配列
-
-          foreach ($acf_fields as $key => $value) {
-            // グループのプレフィックスを探す
-            if ($value === '_group') {
-              $group_prefix = $key . '_'; // グループのプレフィックス
-              $group_fields[$key] = []; // グループフィールドの配列を初期化
-
-              // グループ要素を抽出
-              foreach ($acf_fields as $sub_key => $sub_value) {
-                if (strpos($sub_key, $group_prefix) === 0) {
-                  $sub_field_key = str_replace($group_prefix, '', $sub_key);
-                  $group_fields[$key][$sub_field_key] = $sub_value;
-                }
-              }
-            }
-          }
-
-          // 通常のフィールドを更新
-          foreach ($acf_fields as $key => $value) {
-            if ($value === '_group') {
-              continue; // グループ要素はここでは処理しない
-            }
-            update_field($key, $value, $new_post_id);
-          }
-
-          // グループフィールドを更新
-          foreach ($group_fields as $group_key => $group_value) {
-            update_field($group_key, $group_value, $new_post_id);
-          }
-        } else {
-          $error_logs[] = "ID " . $new_post_id . ": ACFまたはSCFがインストールされていません。";
         }
-      }
-      //コメントのインポート
-      if (isset($entry['comments'])) {
-        itmar_insert_comments_with_meta($entry['comments'], $new_post_id, $import_mode === "update");
+
+        $group_fields = []; // グループフィールドを格納する配列
+
+        foreach ($acf_fields as $key => $value) {
+          // グループのプレフィックスを探す
+          if ($value === '_group') {
+            $group_prefix = $key . '_'; // グループのプレフィックス
+            $group_fields[$key] = []; // グループフィールドの配列を初期化
+
+            // グループ要素を抽出
+            foreach ($acf_fields as $sub_key => $sub_value) {
+              if (strpos($sub_key, $group_prefix) === 0) {
+                $sub_field_key = str_replace($group_prefix, '', $sub_key);
+                $group_fields[$key][$sub_field_key] = $sub_value;
+              }
+            }
+          }
+        }
+
+        // 通常のフィールドを更新
+        foreach ($acf_fields as $key => $value) {
+          if ($value === '_group') {
+            continue; // グループ要素はここでは処理しない
+          }
+          update_field($key, $value, $new_post_id);
+        }
+
+        // グループフィールドを更新
+        foreach ($group_fields as $group_key => $group_value) {
+          update_field($group_key, $group_value, $new_post_id);
+        }
+      } else {
+        $error_logs[] = "ID " . $new_post_id . ": ACFまたはSCFがインストールされていません。";
       }
     }
-
-    $line_class = $post_type === 'revision' ? 'rev_line' : 'data_line';
-    echo "<tr class='{$line_class}'><td>" . ($index + 1) . "</td><td>{$post_title}</td><td>{$post_type}</td><td>{$result}</td></tr>";
+    //コメントのインポート
+    if (isset($entry['comments'])) {
+      itmar_insert_comments_with_meta($entry['comments'], $new_post_id, $import_mode === "update");
+    }
   }
 
-  echo '</tbody>';
-  echo '</table>';
-
-  // エラーログがある場合、ファイルを作成してダウンロード
-  if (!empty($error_logs)) {
-    $filename = pathinfo($zip_path, PATHINFO_FILENAME);
-    $log_file_path = wp_upload_dir()['path'] . "/error_log_{$filename}.html";
-
-    // **HTMLヘッダーを追加**
-    $html_content = "<!DOCTYPE html>
-    <html lang='ja'>
-    <head>
-        <meta charset='UTF-8'>
-        <title>" . esc_html__("Post Data Import", "post-migration") . "</title>
-    </head>
-    <body>
-    <pre>" . implode("\n", $error_logs) . "</pre>
-    </body>
-    </html>";
-
-    // UTF-8 に変換して保存
-    file_put_contents($log_file_path, mb_convert_encoding($html_content, "UTF-8", "auto"));
-
-    // ダウンロード用のURLを取得
-    $log_file_url = wp_upload_dir()['url'] . "/error_log_{$filename}.html";
-    //エラーログ表示のリンク
-    echo wp_kses_post("<div class='post_trns_link'><a href='{$log_file_url}' target='_blank'>" . esc_html__("Viewing Error Logs", "post-migration") . "</a></div>");
-  }
-
-  $zip->close();
+  $result_arr = [
+    'result' => $post_type,
+    'id' => $new_post_id,
+    'parentID' => $parent_id,
+    'message' => $result,
+    'log' => $error_logs
+  ];
+  return $result_arr;
 }
+
 
 // JSONインポート処理
 function itmar_post_tranfer_import_json()
@@ -739,6 +1207,7 @@ function itmar_post_tranfer_import_json()
   if (isset($_POST['import_mode'])) {
     $import_mode = $_POST['import_mode'];
   }
+
 
   // ファイルが選択されていない場合はエラー
   if (empty($_FILES['import_file']['name'])) {
@@ -773,18 +1242,122 @@ function itmar_post_tranfer_import_json()
       return;
     }
 
-    $zip->close();
-
     // JSONファイルの読み込み
     if (file_exists($json_path)) {
-      $json_data = file_get_contents($json_path);
-      $decoded_data = json_decode($json_data, true);
-
-      if (!empty($decoded_data) && is_array($decoded_data)) {
-        itmar_process_import_data($decoded_data, $zip_path, $import_mode);
-      } else {
-        echo '<div class="error"><p>' . esc_html__("Failed to parse JSON data.", "post-migration") . '</p></div>';
+      // ファイルを開く
+      $fp = fopen($json_path, 'r');
+      if (!$fp) {
+        die('ファイルを開けませんでした。');
       }
+
+      //投稿データの始まりの行と終了の行を取得して配列に取り込む
+      $object_positions = [];
+      $line_number = 1;
+      $current_object_start = null;
+
+      while (($line = fgets($fp)) !== false) {
+
+        // 冒頭1文字をチェック（trimなし）
+        $first_char = isset($line[0]) ? $line[0] : '';
+
+        if ($first_char === '{') {
+          if ($current_object_start !== null) {
+            // 直前の行がオブジェクトの終了行
+            $object_positions[] = [
+              'start' => $current_object_start,
+              'end'   => $line_number - 1
+            ];
+          }
+          // 新しいオブジェクトの開始
+          $current_object_start = $line_number;
+        }
+
+        $line_number++;
+      }
+
+      // 最後のオブジェクトを追加
+      if ($current_object_start !== null) {
+        $object_positions[] = [
+          'start' => $current_object_start,
+          'end'   => $line_number - 2
+        ];
+      }
+      fclose($fp);
+
+      //インポート結果の表示
+      echo '<h2>' . __("Import Result", "post-migration") . '</h2>';
+      echo '<table class="widefat">';
+      echo '<thead><tr><th>ID</th><th>' . __("Title", "post-migration") . '</th><th>' . __("Post Type", "post-migration") . '</th><th>' . __("Result", "post-migration") . '</th></tr></thead>';
+      echo '<tbody class="post_trns_tbody">';
+
+
+
+      //インポートしたデータのIDを保存しておく変数
+      $parent_id = 0;
+      //エラーログ
+      $error_logs = [];
+
+
+      $json_file = new SplFileObject($json_path);
+
+      foreach ($object_positions as $position) {
+        $json_file->seek($position['start'] - 1); // 指定の開始行へ移動
+        $buffer = "";
+
+        while ($json_file->key() <= $position['end'] - 1 && !$json_file->eof()) {
+          $buffer .= $json_file->fgets();
+        }
+        // 末尾に `,` がある場合は削除
+        $buffer = rtrim($buffer, ",\n ");
+
+        // ここで `$post_data` を処理する
+        $post_data = json_decode($buffer, true);
+        $result = itmar_process_import_data($post_data, $zip, $parent_id, $import_mode);
+        //$parent_idの更新
+        $parent_id = $result['parentID'];
+        //ログの蓄積
+        $error_logs = array_merge($error_logs, $result['log']);
+
+        //結果表示
+        $disp_id = $result['result'] === 'revision' ? $result['parentID'] : $result['id'];
+        $line_class = ($result['result'] === 'revision')
+          ? 'rev_line'
+          : (($result['result'] === 'error')
+            ? 'skip_line'
+            : 'data_line');
+
+        echo "<tr class='{$line_class}'><td>" . $disp_id . "</td><td>{$post_data['title']}</td><td>{$post_data['post_type']}</td><td>" . $result['message'] . "</td></tr>";
+      }
+      echo '</tbody>';
+      echo '</table>';
+
+      // エラーログがある場合、ファイルを作成してダウンロード
+      if (!empty($error_logs)) {
+        $filename = pathinfo($zip_path, PATHINFO_FILENAME);
+        $log_file_path = wp_upload_dir()['path'] . "/error_log_{$filename}.html";
+
+        // **HTMLヘッダーを追加**
+        $html_content = "<!DOCTYPE html>
+          <html lang='ja'>
+          <head>
+              <meta charset='UTF-8'>
+              <title>" . esc_html__("Post Data Import", "post-migration") . "</title>
+          </head>
+          <body>
+          <pre>" . implode("\n", $error_logs) . "</pre>
+          </body>
+          </html>";
+
+        // UTF-8 に変換して保存
+        file_put_contents($log_file_path, mb_convert_encoding($html_content, "UTF-8", "auto"));
+
+        // ダウンロード用のURLを取得
+        $log_file_url = wp_upload_dir()['url'] . "/error_log_{$filename}.html";
+        //エラーログ表示のリンク
+        echo wp_kses_post("<div class='post_trns_link'><a href='{$log_file_url}' target='_blank'>" . esc_html__("Viewing Error Logs", "post-migration") . "</a></div>");
+      }
+
+      $zip->close();
 
       unlink($json_path); // JSON削除
     } else {
@@ -1045,7 +1618,6 @@ function itmar_post_tranfer_export_json()
     }
 
     //エクスポートディレクトリの設定
-    //$export_data = [];
     $upload_dir = wp_upload_dir();
     $save_folder = $upload_dir['basedir'] . '/exported_media/'; // 画像保存用ディレクトリ
 
@@ -1194,7 +1766,6 @@ function itmar_post_tranfer_export_json()
         }
         $post_data['content'] = $modified_content;
 
-        //$export_data[] = $post_data;
         // JSON に変換
         $json_data = json_encode($post_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
@@ -1212,9 +1783,6 @@ function itmar_post_tranfer_export_json()
     fclose($fp);
 
     // JSON を ZIP に追加
-    //$json_data = json_encode($export_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    //$json_path = $upload_dir['basedir'] . '/export_data.json';
-    //file_put_contents($json_path, $json_data);
     $zip->addFile($json_path, 'export_data.json');
 
     // ZIP を閉じる
