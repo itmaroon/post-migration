@@ -136,17 +136,7 @@ function itmar_post_tranfer_import_page()
       </table>
     </div>
 
-    <!-- オーバーレイを追加 -->
-    <div id="importOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 10000; text-align: center;">
-      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 10px;">
-        <h3><?php echo __("Importing...", "post-migration") ?></h3>
-        <img src="<?php echo plugin_dir_url(__FILE__) . 'img/transloading.gif'; ?>" style="margin: 0 auto" alt="Loading...">
-        <div style="width: 300px; background: #ccc; border-radius: 5px; overflow: hidden;">
-          <div id="progressBar" style="width: 0%; height: 20px; background: #28a745;"></div>
-        </div>
-        <p id="progressText">0%</p>
-      </div>
-    </div>
+
 
     <script>
       document.addEventListener("DOMContentLoaded", function() {
@@ -163,17 +153,8 @@ function itmar_post_tranfer_import_page()
         document.getElementById("inportForm").addEventListener("submit", async function(event) {
           event.preventDefault();
 
-          // **オーバーレイ要素取得**
-          const overlay = document.getElementById("importOverlay");
-          const progressBar = document.getElementById("progressBar");
-          const progressText = document.getElementById("progressText");
-          const loadingImg = overlay.querySelector("img"); // ローディング画像
-
           // **オーバーレイを表示**
-          overlay.style.display = "block";
-          progressText.textContent = "インポートファイルの解析中...";
-          progressBar.style.display = "none"; // プログレスバー非表示
-          loadingImg.style.display = "block"; // ローディング画像表示
+          ProgressOverlay.show("<?php __("Parsing import file...", "post-migration") ?>");
 
           // `inport_result` を取得
           const inportResult = document.querySelector(".inport_result");
@@ -225,16 +206,13 @@ function itmar_post_tranfer_import_page()
               console.log("Received result:", resultObj);
               if (first_flg) {
                 // **解析完了後の処理**
-                progressBar.style.display = "block"; // プログレスバーを表示
-                loadingImg.style.display = "none"; // ローディング画像を非表示
+                ProgressOverlay.showChange();
                 first_flg = false; //フラグをおろす
               }
 
               //プログレスバーの更新関数
               processedItems++;
-              let percentage = Math.round((processedItems / totalItems) * 100);
-              progressBar.style.width = percentage + "%";
-
+              ProgressOverlay.changeProgress(totalMainPosts, currentMainPostIndex, totalItems, processedItems);
 
               // `result` からデータを取得 (サーバーのレスポンス構造に応じて修正)
               const {
@@ -248,7 +226,6 @@ function itmar_post_tranfer_import_page()
               // **本体投稿のときだけカウントを進める**
               if (result !== "revision") {
                 currentMainPostIndex++;
-                progressText.textContent = `全 ${totalMainPosts} 件中 ${currentMainPostIndex} 件目処理中...`;
               }
 
               //revisionのときはテーブルには出力しない
@@ -281,9 +258,7 @@ function itmar_post_tranfer_import_page()
           }
 
           // **完了時にオーバーレイを非表示**
-          setTimeout(() => {
-            document.getElementById("importOverlay").style.display = "none";
-          }, 1000);
+          ProgressOverlay.hide();
 
           // エラーログがある場合、ファイルを作成してダウンロード
           if (result_log.length != 0) {
@@ -974,7 +949,7 @@ function itmar_post_tranfer_export_page()
   <div class="wrap">
 
     <div class="form-container">
-      <form method="post" action="">
+      <form id="exportForm" method="post">
         <input type="hidden" name="export_action" value="export_json">
 
         <!-- ヘッダーを固定 -->
@@ -1111,9 +1086,39 @@ function itmar_post_tranfer_export_page()
     </div>
     <script>
       let isNavigatingWithinPlugin = false; // 「前へ」「次へ」ボタンでの遷移かどうかを判定
+      //Ajax送信先URL
+      let ajaxUrl = ' <?php echo esc_url(admin_url('admin-ajax.php', __FILE__)); ?>';
 
       document.addEventListener("DOMContentLoaded", function() {
         const storageKey = "itmar_selected_posts";
+        //サーバーでの進捗監視の開始
+        const form = document.getElementById("exportForm");
+        if (form) {
+          form.addEventListener("submit", function(event) {
+            ProgressOverlay.show(); // "オーバーレイを表示"
+            ProgressOverlay.showChange();
+            let interval = setInterval(() => {
+              jQuery.post(ajaxurl, {
+                action: 'get_export_progress'
+              }, function(response) {
+                if (response.success) {
+                  ProgressOverlay.changeProgress(response.data.total, response.data.progress);
+                  if (response.data.total === 0) {
+                    clearInterval(interval);
+                    ProgressOverlay.hide(); // "オーバーレイを消去"  
+                  }
+
+                  if (response.data.progress >= response.data.total) {
+                    clearInterval(interval);
+                    ProgressOverlay.hide(); // "オーバーレイを消去"
+
+                  }
+                }
+              });
+            }, 500); // 0.5秒ごとに取得
+          });
+        }
+
         let selectedPosts = []; //選択されたセレクトボックスをためる配列
         //実行ボタンのアニメーション関数
         const exec_animation = () => {
@@ -1129,25 +1134,6 @@ function itmar_post_tranfer_export_page()
           }
         }
 
-        // **ローディング画像のHTMLを追加**
-        let loadingOverlay = document.createElement("div");
-        loadingOverlay.id = "loading-overlay";
-        loadingOverlay.innerHTML = `<img src="<?php echo plugin_dir_url(__FILE__) . 'img/transloading.gif'; ?>" alt="Loading...">`;
-        document.querySelector("form").appendChild(loadingOverlay);
-
-        // ローディング画像を非表示にする関数
-        function hideLoadingOverlay() {
-          loadingOverlay.style.display = "none";
-        }
-
-        // ローディング画像を表示する関数
-        function showLoadingOverlay() {
-          loadingOverlay.style.display = "flex";
-        }
-
-        // **初期状態ではローディング画像を非表示**
-        hideLoadingOverlay();
-
 
         //行見出しのチェックボックスを押したときに、そのテーブル内のチェックボックスが変更される処理
         document.querySelectorAll("input[id^='select-all-']").forEach(function(checkbox) {
@@ -1162,7 +1148,6 @@ function itmar_post_tranfer_export_page()
             });
           });
         });
-
 
         function restoreSelectedPosts() {
           selectedPosts = JSON.parse(sessionStorage.getItem(storageKey)) || [];
@@ -1218,7 +1203,7 @@ function itmar_post_tranfer_export_page()
             document.querySelector("form").style.opacity = "0.5";
 
             // **ローディング画像を表示**
-            showLoadingOverlay();
+            ProgressOverlay.show(); // "オーバーレイを表示"
 
             sessionStorage.setItem(storageKey, JSON.stringify(selectedPosts)); // クリック時にデータを保存
           });
@@ -1245,12 +1230,8 @@ add_action('admin_init', 'itmar_post_tranfer_export_json');
 // エクスポートのサーバーサイド処理
 function itmar_post_tranfer_export_json()
 {
-
   if (isset($_POST['export_action']) && $_POST['export_action'] === 'export_json' && isset($_POST['all_export_posts']) && (isset($_POST['export_posts']) || isset($_POST['export_types']))) {
 
-    //
-    //個別に選択された投稿のID
-    //$post_ids = isset($_POST['export_posts']) ? array_map('intval', $_POST['export_posts']) : [];
     $str_post_ids = isset($_POST['all_export_posts']) ? $_POST['all_export_posts'] : "";
     $post_ids = explode(",", $str_post_ids);
     $selected_post_types = isset($_POST['export_types']) ? $_POST['export_types'] : [];
@@ -1319,6 +1300,10 @@ function itmar_post_tranfer_export_json()
     fwrite($fp, "[\n");
     //ファイルの先頭であることを示すフラグ
     $first = true;
+    // 処理件数のカウンター
+    $count = 0;
+    //全件数の記録
+    update_option('export_total', count($selected_posts));
 
     foreach ($selected_posts as $post_id) {
       $post = get_post($post_id);
@@ -1457,6 +1442,8 @@ function itmar_post_tranfer_export_json()
         fwrite($fp, $json_data);
 
         $first = false; // 最初のデータ処理が終わったことを記録
+        $count++;
+        update_option('export_progress', $count); //処理済みの件数を記録
       }
     }
     // JSON 配列の閉じ
@@ -1483,6 +1470,20 @@ function itmar_post_tranfer_export_json()
     exit;
   }
 }
+
+//エクスポートの進捗をフロントエンドに返すフック
+function itmar_get_export_progress()
+{
+
+  $total = get_option('export_total', 0);
+  $progress = get_option('export_progress', 0);
+  wp_send_json_success([
+    'total' => $total,
+    'progress' => $progress
+  ]);
+}
+add_action('wp_ajax_get_export_progress', 'itmar_get_export_progress');
+add_action('wp_ajax_nopriv_get_export_progress', 'itmar_get_export_progress');
 
 
 //ダウンロード関数
