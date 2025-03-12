@@ -154,7 +154,7 @@ function itmar_post_tranfer_import_page()
           event.preventDefault();
 
           // **オーバーレイを表示**
-          ProgressOverlay.show("<?php __("Parsing import file...", "post-migration") ?>");
+          await ProgressOverlay.show("<?php echo __("Parsing import file...", "post-migration") ?>");
 
           // `inport_result` を取得
           const inportResult = document.querySelector(".inport_result");
@@ -199,11 +199,13 @@ function itmar_post_tranfer_import_page()
 
           //最初の１件が終了してからプログレスの形状を変えるためのフラグ
           let first_flg = true;
+
           //jsonDataを順次サーバーに送る
           for (let jsonData of jsonDataArray) {
             try {
               const resultObj = await sendFetchData(jsonData, revParentID, import_mode);
               console.log("Received result:", resultObj);
+
               if (first_flg) {
                 // **解析完了後の処理**
                 ProgressOverlay.showChange();
@@ -222,6 +224,8 @@ function itmar_post_tranfer_import_page()
                 log,
                 message
               } = resultObj;
+              //キャンセルが検出されたら終了(ループから抜ける)
+              if (result === "cancel") break;
 
               // **本体投稿のときだけカウントを進める**
               if (result !== "revision") {
@@ -457,8 +461,10 @@ function itmar_post_tranfer_import_page()
 
         async function extractMediaUpload(mediaInfo, postID, mediaType) {
           if (!zipFiles || Object.keys(zipFiles).length === 0) {
-            console.error("ZIP ファイルがまだロードされていません。");
-            return;
+            return ({
+              status: "error",
+              message: "<?php echo __('The ZIP file has not been loaded yet.', 'post-migration'); ?>"
+            });
           }
 
           // 指定されたパスのファイルを探す
@@ -468,34 +474,32 @@ function itmar_post_tranfer_import_page()
             fileName.includes(mediaPath)
           );
           if (!matchingFile) {
-            console.error("指定されたパスのファイルが ZIP 内に見つかりません。");
-            return;
+
+            return ({
+              status: "error",
+              message: `${mediaPath} not found`
+            });
           }
           // ファイルのバイナリデータを取得
           const fileData = await zipFiles[matchingFile].async("arraybuffer");
 
-          // `ArrayBuffer` を Base64 に変換
-          const uint8Array = new Uint8Array(fileData);
-          const base64String = btoa(String.fromCharCode(...uint8Array));
-
           // URL エンコード用のデータを作成
-          const params = new URLSearchParams();
-          params.append("action", "post_media_fetch"); // WordPress 側の処理名
-          params.append('nonce', '<?php echo wp_create_nonce('itmar-ajax-nonce'); ?>');
-          params.append("filepath", matchingFile);
-          params.append("postID", postID);
-          params.append("mediaType", mediaType);
-          params.append("filedata", base64String);
-          if (mediaType === 'acf_field') params.append("acfField", mediaInfo.key);
+          const formData = new FormData();
+          formData.append("action", "post_media_fetch"); // WordPress 側の処理名
+          formData.append('nonce', '<?php echo wp_create_nonce('itmar-ajax-nonce'); ?>');
+          formData.append("filepath", matchingFile);
+          formData.append("postID", postID);
+          formData.append("mediaType", mediaType);
+          formData.append("file", new File([fileData], matchingFile, {
+            type: "application/octet-stream"
+          })); // ここでバイナリのまま送る！
+          if (mediaType === 'acf_field') formData.append("acfField", mediaInfo.key);
 
           // サーバーへアップロード
           try {
             const response = await fetch(ajaxUrl, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              body: params.toString(),
+              body: formData,
             });
 
             if (!response.ok) {
@@ -718,14 +722,23 @@ function itmar_post_data_fetch()
 {
   // WordPress の nonce チェック（セキュリティ対策）
   check_ajax_referer('itmar-ajax-nonce', 'nonce');
+  // **キャンセルフラグチェック**
+  $cancel_flag = get_option('start_cancel', false);
+  if ($cancel_flag) {
+    wp_send_json(["result" => "cancel", "message" => __("Processing has been aborted", "post-migration")]);
+    exit;
+  }
+
   // **JSON をデコード**
   $post_data = json_decode(stripslashes($_POST['post_data']), true);
 
   // **デコードエラーチェック**
   if (!is_array($post_data) || empty($post_data)) {
-    wp_send_json_error(["message" => "無効なデータ"]);
+    wp_send_json_error(["message" => __("Incorrect data", "post-migration")]);
     exit;
   }
+
+
   $parent_id = isset($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
   $import_mode = isset($_POST['import_mode']) ? sanitize_text_field($_POST['import_mode']) : "update"; // デフォルト: update
 
@@ -773,25 +786,19 @@ function itmar_post_media_fetch()
   // WordPress の nonce チェック（セキュリティ対策）
   check_ajax_referer('itmar-ajax-nonce', 'nonce');
 
-  if (!isset($_POST['filepath']) || !isset($_POST['filedata'])) {
-    wp_send_json_error("必要なデータがありません。");
+  if (!isset($_FILES['file'])) {
+    wp_send_json_error(['message' => 'ファイルがありません'], 400);
   }
-  // **フルパスからファイル名のみ取得**
+
+  $file = $_FILES['file'];
+  $upload_dir = wp_upload_dir();
+  $dest_path = $upload_dir['path'] . '/' . basename($file['name']);
   $filepath = sanitize_text_field($_POST['filepath']);
-  $filename = basename($filepath);
-  // ファイル名が無効ならエラー
-  if (empty($filename) || strpos($filename, '..') !== false) {
-    wp_send_json_error(array("message" => "無効なファイル名です。"));
-  }
-  $filedata = base64_decode($_POST['filedata']);
+  $filename = basename($file['name']);
+
   $media_type = sanitize_text_field($_POST['mediaType']);
   $acf_field = isset($_POST['acfField']) ? sanitize_text_field($_POST['acfField']) : null;
   $post_id = isset($_POST['postID']) ? absint($_POST['postID']) : 0;
-
-  // アップロードフォルダのパスを取得
-  $upload_dir = wp_upload_dir();
-  $extract_path = trailingslashit($upload_dir['path']);
-  $dest_path = $extract_path . $filename;
 
   //アップロードの結果
   $result = null;
@@ -807,7 +814,7 @@ function itmar_post_media_fetch()
     }
   } else {
     //ファイルを保存してメディアライブラリに登録
-    if (file_put_contents($dest_path, $filedata) !== false) {
+    if (move_uploaded_file($file['tmp_name'], $dest_path)) {
       // メディアライブラリに登録
       $filetype = wp_check_filetype($filename, null);
       $attachment = array(
@@ -833,7 +840,7 @@ function itmar_post_media_fetch()
   //投稿データにメディア情報を反映
   if ($attachment_id) {
     if ($media_type === 'thumbnail') { //メディアがアイキャッチ画像のとき
-      set_post_thumbnail($post_id, $attachment_id);
+      $result_attachment = set_post_thumbnail($post_id, $attachment_id);
       $message = __('Upload thumbnail', "post-migration") . $message;
     } else if ($media_type === 'content') {
       //改めて$attachment_idからメディアのurlを取得
@@ -1801,6 +1808,7 @@ function itmar_get_acf_field_key($meta_key)
   return $ret;
 }
 
+//リビジョンの制御
 add_filter('wp_revisions_to_keep', function ($num, $post) {
   if (!$post) return $num; // 安全のため null チェック
 

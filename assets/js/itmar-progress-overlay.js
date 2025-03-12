@@ -1,10 +1,31 @@
 window.ProgressOverlay = (function () {
+  //処理の開始と中断のためのフックに渡すフォームデータ
+
   return {
-    show: function (message) {
+    show: async function (message) {
       document.getElementById("importOverlay").style.display = "block";
       document.getElementById("progressText").textContent = message;
       document.getElementById("progressBarWrapper").style.display = "none";
       document.getElementById("progressLoadingImg").style.display = "block";
+
+      const formData = new URLSearchParams();
+      formData.append("nonce", ajax_object.nonce);
+      formData.append("action", "start_cancel_progress");
+      formData.append("flg", "false"); // ✅ `"false"` に変更
+
+      try {
+        // ✅ `fetch()` を `await` することで、完了を待つ
+        const response = await fetch(ajax_object.ajaxurl, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData,
+        });
+
+        const data = await response.json();
+        console.log("started:", data);
+      } catch (error) {
+        console.error("Error:", error);
+      }
     },
 
     showChange: function () {
@@ -35,5 +56,33 @@ window.ProgressOverlay = (function () {
         document.getElementById("importOverlay").style.display = "none";
       }, 1000);
     },
+
+    cancel: function () {
+      const formData = new URLSearchParams();
+      formData.append("nonce", ajax_object.nonce);
+      formData.append("action", "start_cancel_progress");
+      formData.append("flg", "true"); // ✅ `"true"` に変更
+
+      fetch(ajaxurl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          alert(wp.i18n.__(data.data.message, "post-migration"));
+          this.hide();
+        })
+        .catch((error) => console.error("Error:", error));
+    },
   };
 })();
+
+// **キャンセルボタンのクリックイベントを追加**
+document.addEventListener("DOMContentLoaded", function () {
+  document
+    .getElementById("cancelButton")
+    .addEventListener("click", function () {
+      ProgressOverlay.cancel();
+    });
+});
