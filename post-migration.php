@@ -14,7 +14,10 @@ Domain Path:  /languages
 if (! defined('ABSPATH')) exit;
 
 //処理中のプログレスを表示するクラスの読み込み
-require_once plugin_dir_path(__FILE__) . 'itmar-progress-overlay.php';
+//require_once plugin_dir_path(__FILE__) . 'itmar-progress-overlay.php';
+//require_once __DIR__ . '/vendor/autoload.php';
+
+\Itmar\BlockClassPakage\ItmarProgressClass::get_instance();
 
 //CSS等の読込
 function itmar_post_tranfer_script_init()
