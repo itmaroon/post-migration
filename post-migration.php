@@ -13,10 +13,11 @@ Domain Path:  /languages
 
 if (! defined('ABSPATH')) exit;
 
-//処理中のプログレスを表示するクラスの読み込み
-//require_once plugin_dir_path(__FILE__) . 'itmar-progress-overlay.php';
-//require_once __DIR__ . '/vendor/autoload.php';
-
+if (! class_exists('ComposerAutoloaderInitab015168147af054190c06099dec3dfa', false)) {
+  //処理中のプログレスを表示するクラスの読み込み
+  require_once __DIR__ . '/vendor/autoload.php';
+}
+//プログレスオーバーレイのインスタンスを取得しておく
 \Itmar\BlockClassPakage\ItmarProgressClass::get_instance();
 
 //CSS等の読込

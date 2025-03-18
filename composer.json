@@ -1,0 +1,5 @@
+{
+    "require": {
+        "itmar/block-class-package": "^1.3"
+    }
+}
