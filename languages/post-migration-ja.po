@@ -6,7 +6,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/post-"
 "migration\n"
 "POT-Creation-Date: 2025-02-12T02:26:33+01:00\n"
-"PO-Revision-Date: 2025-02-12 10:28+0900\n"
+"PO-Revision-Date: 2025-04-13 17:39+0900\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ja\n"
@@ -88,7 +88,7 @@ msgstr "インポート開始"
 
 #: post-migration.php:173
 msgid "Post Data Custom Export"
-msgstr "投稿データのカスタムインポート"
+msgstr "投稿データのカスタムエクスポート"
 
 #: post-migration.php:174
 msgid "Select the articles you want to export."
