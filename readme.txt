@@ -1,7 +1,7 @@
 === POST MIGRATION ===
 Contributors: Web Creator ITmaroon
 Tags: post, duplicate, transfer, media
-Requires at least: 6.3
+Requires at least: 6.4
 Tested up to: 6.8
 Stable tag: 0.1.0
 License: GPLv2 or later
@@ -60,9 +60,59 @@ PHP class management is now done using Composer.
 [Packagist](https://packagist.org/packages/itmar/block-class-package)
  
 
-== External services ==  
-This plugin implements ZIP file creation and extraction functionality using JSZip, an open source JavaScript library released under the MIT license.
-[JSZip LICENSE](https://raw.github.com/Stuk/jszip/main/LICENSE.markdown)
+== Third Party Libraries ==
 
+This plugin uses the following third-party libraries:
+
+=== FileSaver.js ===
+- Purpose: Used to enable client-side file saving functionality (e.g., downloading generated ZIP files in the browser).
+- Library URL: https://github.com/eligrey/FileSaver.js/
+- License: MIT License
+
+Copyright (c) 2016 Eli Grey.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+=== JSZip ===
+- Purpose: Used to create ZIP files directly on the client side in the browser.
+- Library URL: https://github.com/Stuk/jszip
+- License: MIT License
+
+Copyright (c) 2009-2022 Stuart Knightley, David Duponchel,
+          Franz Buchinger, António Afonso
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 

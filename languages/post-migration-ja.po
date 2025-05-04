@@ -5,15 +5,15 @@ msgstr ""
 "Project-Id-Version: POST MIGRATION 0.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/post-"
 "migration\n"
-"POT-Creation-Date: 2025-02-12T02:26:33+01:00\n"
-"PO-Revision-Date: 2025-04-13 17:39+0900\n"
+"POT-Creation-Date: 2025-04-28T03:10:21+02:00\n"
+"PO-Revision-Date: 2025-04-28 10:28+0900\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.6\n"
 "X-Domain: post-migration\n"
 
 #. Plugin Name of the plugin
@@ -58,162 +58,231 @@ msgstr "エクスポート"
 msgid "export"
 msgstr "エクスポート"
 
-#: post-migration.php:110 post-migration.php:161
+#: post-migration.php:110 post-migration.php:884
 msgid "You do not have sufficient permissions to access this page."
 msgstr "このページにアクセスするための十分な権限がありません。"
 
-#: post-migration.php:115 post-migration.php:698
+#: post-migration.php:115
 msgid "Post Data Import"
 msgstr "投稿データインポート"
 
-#: post-migration.php:122
+#: post-migration.php:120
 msgid "ZIP file to import"
 msgstr "インポートするZIPファイル"
 
-#: post-migration.php:130
+#: post-migration.php:128
 msgid "How to import"
 msgstr "インポートの方法"
 
-#: post-migration.php:133
-msgid "Override by ID"
-msgstr "IDによる上書き"
-
-#: post-migration.php:136
+#: post-migration.php:131
 msgid "Add new record"
 msgstr "新規に投稿を追加"
 
-#: post-migration.php:143
+#: post-migration.php:134
+msgid "Override by ID"
+msgstr "IDによる上書き"
+
+#: post-migration.php:142
 msgid "Start Import"
 msgstr "インポート開始"
 
-#: post-migration.php:173
-msgid "Post Data Custom Export"
-msgstr "投稿データのカスタムエクスポート"
-
-#: post-migration.php:174
-msgid "Select the articles you want to export."
-msgstr "エクスポートする記事を選択してください。"
-
-#: post-migration.php:177
-msgid "Include custom fields"
-msgstr "カスタムフィールドを含む"
-
-#: post-migration.php:181
-msgid "Include revisions"
-msgstr "リビジョンを含む"
-
-#: post-migration.php:185
-msgid "Include comments"
-msgstr "コメントを含む"
-
-#: post-migration.php:234
-msgid " Select all records"
-msgstr "全ての投稿を選択"
-
-#: post-migration.php:241 post-migration.php:486
-msgid "Title"
-msgstr "タイトル"
-
-#: post-migration.php:241
-msgid "Featured"
-msgstr "アイキャッチ"
-
-#: post-migration.php:246
-msgid "Updated on"
-msgstr "上書き"
-
-#: post-migration.php:258
-msgid "None"
-msgstr "なし"
-
-#: post-migration.php:282
-msgid "Before"
-msgstr "前へ"
-
-#: post-migration.php:285
-msgid "Page"
-msgstr "ページ"
-
-#: post-migration.php:289
-msgid "Next"
-msgstr "次へ"
-
-#: post-migration.php:437
-msgid "Processing stopped due to existing file found (media ID:"
-msgstr "既存のファイルが見つかったため処理を中止しました。 (メディア ID:"
-
-#: post-migration.php:446
-msgid "File not found in ZIP"
-msgstr "ZIPファイルが見つかりません"
-
-#: post-migration.php:454
-msgid "Unpacked image not found:"
-msgstr "解凍された画像が見つかりません:"
-
-#: post-migration.php:471
-msgid "File was deleted before metadata was updated:"
-msgstr "メタデータが更新される前にファイルが削除されました:"
-
-#: post-migration.php:484
+#: post-migration.php:147
 msgid "Import Result"
 msgstr "インポートの結果"
 
-#: post-migration.php:486
+#: post-migration.php:152 post-migration.php:967
+msgid "Title"
+msgstr "タイトル"
+
+#: post-migration.php:153
 msgid "Post Type"
 msgstr "投稿タイプ"
 
-#: post-migration.php:486
+#: post-migration.php:154
 msgid "Result"
 msgstr "結果"
 
-#: post-migration.php:492 post-migration.php:779
-msgid "Failed to extract ZIP file."
-msgstr "ZIPファイルの解凍に失敗しました。"
+#: post-migration.php:177
+msgid "Parsing import file..."
+msgstr "インポートファイルの解析中..."
 
-#: post-migration.php:519
-msgid "Skip (unregistered post type)"
-msgstr "スキップ（未登録の投稿タイプ）"
-
-#: post-migration.php:524
-msgid "Skip (Existing data available)"
-msgstr "スキップ（既存のデータあり）"
-
-#: post-migration.php:575
-msgid "Error (update failed)"
-msgstr "エラー（更新失敗）"
-
-#: post-migration.php:578
-msgid "Overwrite successful"
-msgstr "上書き成功"
-
-#: post-migration.php:584
-msgid "Error (addition failed)"
-msgstr "エラー（追加失敗）"
-
-#: post-migration.php:587
-msgid "Addition successful"
-msgstr "追加成功"
-
-#: post-migration.php:711
-msgid "Viewing Error Logs"
-msgstr "エラーログの表示"
-
-#: post-migration.php:730
+#: post-migration.php:190
 msgid "Select the ZIP file."
 msgstr "ZIPファイルを選択してください。"
 
-#: post-migration.php:741
-msgid "File upload failed."
+#: post-migration.php:203
+msgid "export_data.json not found."
+msgstr "export_data.jsonが見つかりません。"
+
+#: post-migration.php:396
+msgid "Download the import log"
+msgstr "インポートログのダウンロード"
+
+#: post-migration.php:473
+msgid "Processing has been aborted"
+msgstr "処理が中断されました。"
+
+#: post-migration.php:491
+msgid "Incorrect data"
+msgstr "不正なデータ"
+
+#: post-migration.php:573 post-migration.php:577
+msgid "Skip (unregistered post type)"
+msgstr "スキップ（未登録の投稿タイプ）"
+
+#: post-migration.php:585
+msgid "Skip (Existing revison data available)"
+msgstr "スキップ（既存のリビジョンデータあり）"
+
+#: post-migration.php:623
+msgid "Error (update failed)"
+msgstr "エラー（更新失敗）"
+
+#: post-migration.php:626
+msgid "Overwrite successful"
+msgstr "上書き成功"
+
+#: post-migration.php:628 post-migration.php:639 post-migration.php:641
+msgid "Addition successful"
+msgstr "追加成功"
+
+#: post-migration.php:636
+msgid "Error (addition failed)"
+msgstr "エラー（追加失敗）"
+
+#: post-migration.php:663 post-migration.php:665
+msgid "Taxonomy: "
+msgstr "タクソノミ:"
+
+#: post-migration.php:665
+msgid "has been registered."
+msgstr "登録されています"
+
+#: post-migration.php:673
+msgid "Custom Field Import:"
+msgstr "カスタムフィールドのインポート"
+
+#: post-migration.php:714
+msgid "Custom Field Import(ACF):"
+msgstr "カスタムフィールドのインポート（ACF)"
+
+#: post-migration.php:720
+msgid "Custom Field Import(ACF GROUP):"
+msgstr "カスタムフィールドのインポート（ACFグループ)"
+
+#: post-migration.php:723
+msgid ": ACF or SCF is not installed"
+msgstr ":ACFかSCFがインストールされていません。"
+
+#: post-migration.php:729
+msgid "comment item has been registered."
+msgstr "コメント項目が登録されました。"
+
+#: post-migration.php:803
+msgid "File not found (file name:"
+msgstr "ファイルが見つかりません(ファイル名:"
+
+#: post-migration.php:815
+msgid "Processing stopped due to existing file found (media ID:"
+msgstr "既存のファイルが見つかったため処理を中止しました。 (メディア ID:"
+
+#: post-migration.php:843
+msgid "File uploaded"
+msgstr "ファイルのアップロードしました。"
+
+#: post-migration.php:846
+msgid "Failed to upload file"
 msgstr "ファイルのアップロードに失敗しました。"
 
-#: post-migration.php:755
-msgid "The ZIP file does not contain \"export_data.json\""
-msgstr "ZIPファイルには「export_data.json」が含まれていません"
+#: post-migration.php:855
+msgid "Upload thumbnail: "
+msgstr "サムネイルをアップロード:"
 
-#: post-migration.php:771
-msgid "Failed to parse JSON data."
-msgstr "JSON データの解析に失敗しました。"
+#: post-migration.php:857
+msgid "Uploading in-content media: "
+msgstr "本文内メディアのアップロード:"
 
-#: post-migration.php:776
-msgid "I can't find the extracted JSON file."
-msgstr "抽出したJSONファイルが見つかりません。"
+#: post-migration.php:861
+msgid "Uploading acf media: "
+msgstr "ACFメディアのアップロード:"
+
+#: post-migration.php:897
+msgid "Post Data Custom Export"
+msgstr "投稿データのカスタムエクスポート"
+
+#: post-migration.php:898
+msgid "Select the articles you want to export."
+msgstr "エクスポートする記事を選択してください。"
+
+#: post-migration.php:901
+msgid "Include custom fields"
+msgstr "カスタムフィールドを含む"
+
+#: post-migration.php:905
+msgid "Include revisions"
+msgstr "リビジョンを含む"
+
+#: post-migration.php:909
+msgid "Include comments"
+msgstr "コメントを含む"
+
+#: post-migration.php:960
+msgid " Select all records"
+msgstr "全ての投稿を選択"
+
+#: post-migration.php:967
+msgid "Featured"
+msgstr "アイキャッチ"
+
+#: post-migration.php:972
+msgid "Updated on"
+msgstr "上書き"
+
+#: post-migration.php:984
+msgid "None"
+msgstr "なし"
+
+#: post-migration.php:1016
+msgid "Before"
+msgstr "前へ"
+
+#: post-migration.php:1020
+msgid "Page"
+msgstr "ページ"
+
+#: post-migration.php:1031
+msgid "Next"
+msgstr "次へ"
+
+#: assets/js/itmar-progress-overlay.js:37
+msgid "All"
+msgstr "全"
+
+#: assets/js/itmar-progress-overlay.js:40
+msgid "Items"
+msgstr "件中"
+
+#: assets/js/itmar-progress-overlay.js:43
+msgid "Processing..."
+msgstr "処理中..."
+
+#~ msgid "Unpacked image not found:"
+#~ msgstr "解凍された画像が見つかりません:"
+
+#~ msgid "File was deleted before metadata was updated:"
+#~ msgstr "メタデータが更新される前にファイルが削除されました:"
+
+#~ msgid "Failed to extract ZIP file."
+#~ msgstr "ZIPファイルの解凍に失敗しました。"
+
+#~ msgid "Viewing Error Logs"
+#~ msgstr "エラーログの表示"
+
+#~ msgid "The ZIP file does not contain \"export_data.json\""
+#~ msgstr "ZIPファイルには「export_data.json」が含まれていません"
+
+#~ msgid "Failed to parse JSON data."
+#~ msgstr "JSON データの解析に失敗しました。"
+
+#~ msgid "I can't find the extracted JSON file."
+#~ msgstr "抽出したJSONファイルが見つかりません。"
