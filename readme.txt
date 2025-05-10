@@ -1,5 +1,5 @@
 === POST MIGRATION ===
-Contributors: Web Creator ITmaroon
+Contributors: itmaroon
 Tags: post, duplicate, transfer, media
 Requires at least: 6.4
 Tested up to: 6.8
@@ -68,6 +68,7 @@ This plugin uses the following third-party libraries:
 - Purpose: Used to enable client-side file saving functionality (e.g., downloading generated ZIP files in the browser).
 - Library URL: https://github.com/eligrey/FileSaver.js/
 - License: MIT License
+- Resources : https://github.com/eligrey/FileSaver.js
 
 Copyright (c) 2016 Eli Grey.
 
