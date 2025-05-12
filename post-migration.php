@@ -4,7 +4,7 @@ Plugin Name:  POST MIGRATION
 Description:  This plugin allows you to export post data along with associated media, revisions, and comments into a ZIP file and port it to another WordPress site.
 Requires at least: 6.4
 Requires PHP:      8.2
-Version:      0.1.0
+Version:      0.1.1
 Author:       Web Creator ITmaroon
 Author URI:   https://itmaroon.net
 License:      GPL v2 or later
@@ -55,7 +55,13 @@ function itmar_post_tranfer_script_init($hook)
   //このプラグイン専用のJSをエンキュー
   $script_path = plugin_dir_path(__FILE__) . 'assets/js/post-mi-script.js';
   wp_enqueue_script('post-mi-handle', plugin_dir_url(__FILE__) . 'assets/js/post-mi-script.js', array('jquery'), filemtime($script_path), true);
-
+  //JSの翻訳ファイルの読み込み
+  $lang_path = plugin_dir_path(__FILE__) . 'languages';
+  wp_set_script_translations(
+    'post-mi-handle',
+    'post-migration',
+    $lang_path
+  );
   //JS用のパラメータを読み込む
   wp_localize_script('post-mi-handle', 'itmar_vars', [
     'ajaxurl' => admin_url('admin-ajax.php'),
@@ -182,7 +188,7 @@ function itmar_post_data_fetch()
     wp_send_json(["result" => "cancel", "message" => __("Processing has been aborted", "post-migration")]);
     exit;
   }
-  $db_obj = new \Itmar\WpSettingClassPackage\ItmarDbAction();
+  $db_obj = new \Itmar\WpsettingClassPackage\ItmarDbAction();
 
   // **JSON をデコード**
   $post_data = [];
@@ -509,7 +515,7 @@ function itmar_post_tranfer_export_json()
     wp_send_json_error(['message' => 'Invalid post_id']);
   }
 
-  $db_obj = new \Itmar\WpSettingClassPackage\ItmarDbAction();
+  $db_obj = new \Itmar\WpsettingClassPackage\ItmarDbAction();
 
   //オプションのフラグ
   $include_custom_fields = isset($_POST['include_custom_fields']);

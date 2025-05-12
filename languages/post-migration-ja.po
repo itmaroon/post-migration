@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: POST MIGRATION 0.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/post-"
 "migration\n"
-"POT-Creation-Date: 2025-04-28T03:10:21+02:00\n"
-"PO-Revision-Date: 2025-04-28 10:28+0900\n"
+"POT-Creation-Date: 2025-05-11T14:08:48+02:00\n"
+"PO-Revision-Date: 2025-05-11 21:09+0900\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ja\n"
@@ -42,215 +42,119 @@ msgstr "WebクリエイターITmaroon"
 msgid "https://itmaroon.net"
 msgstr ""
 
-#: post-migration.php:80
+#: post-migration.php:88
 msgid "Import"
 msgstr "インポート"
 
-#: post-migration.php:81
+#: post-migration.php:89
 msgid "import"
 msgstr "インポート"
 
-#: post-migration.php:90
+#: post-migration.php:98
 msgid "Export"
 msgstr "エクスポート"
 
-#: post-migration.php:91
+#: post-migration.php:99
 msgid "export"
 msgstr "エクスポート"
 
-#: post-migration.php:110 post-migration.php:884
+#: post-migration.php:118 post-migration.php:266
 msgid "You do not have sufficient permissions to access this page."
 msgstr "このページにアクセスするための十分な権限がありません。"
 
-#: post-migration.php:115
+#: post-migration.php:123
 msgid "Post Data Import"
 msgstr "投稿データインポート"
 
-#: post-migration.php:120
+#: post-migration.php:128
 msgid "ZIP file to import"
 msgstr "インポートするZIPファイル"
 
-#: post-migration.php:128
+#: post-migration.php:136
 msgid "How to import"
 msgstr "インポートの方法"
 
-#: post-migration.php:131
+#: post-migration.php:139
 msgid "Add new record"
 msgstr "新規に投稿を追加"
 
-#: post-migration.php:134
+#: post-migration.php:142
 msgid "Override by ID"
 msgstr "IDによる上書き"
 
-#: post-migration.php:142
+#: post-migration.php:150
 msgid "Start Import"
 msgstr "インポート開始"
 
-#: post-migration.php:147
+#: post-migration.php:155
 msgid "Import Result"
 msgstr "インポートの結果"
 
-#: post-migration.php:152 post-migration.php:967
+#: post-migration.php:160 post-migration.php:349
 msgid "Title"
 msgstr "タイトル"
 
-#: post-migration.php:153
+#: post-migration.php:161
 msgid "Post Type"
 msgstr "投稿タイプ"
 
-#: post-migration.php:154
+#: post-migration.php:162
 msgid "Result"
 msgstr "結果"
 
-#: post-migration.php:177
-msgid "Parsing import file..."
-msgstr "インポートファイルの解析中..."
-
-#: post-migration.php:190
-msgid "Select the ZIP file."
-msgstr "ZIPファイルを選択してください。"
-
-#: post-migration.php:203
-msgid "export_data.json not found."
-msgstr "export_data.jsonが見つかりません。"
-
-#: post-migration.php:396
-msgid "Download the import log"
-msgstr "インポートログのダウンロード"
-
-#: post-migration.php:473
+#: post-migration.php:182
 msgid "Processing has been aborted"
 msgstr "処理が中断されました。"
 
-#: post-migration.php:491
+#: post-migration.php:201
 msgid "Incorrect data"
 msgstr "不正なデータ"
 
-#: post-migration.php:573 post-migration.php:577
-msgid "Skip (unregistered post type)"
-msgstr "スキップ（未登録の投稿タイプ）"
-
-#: post-migration.php:585
-msgid "Skip (Existing revison data available)"
-msgstr "スキップ（既存のリビジョンデータあり）"
-
-#: post-migration.php:623
-msgid "Error (update failed)"
-msgstr "エラー（更新失敗）"
-
-#: post-migration.php:626
-msgid "Overwrite successful"
-msgstr "上書き成功"
-
-#: post-migration.php:628 post-migration.php:639 post-migration.php:641
-msgid "Addition successful"
-msgstr "追加成功"
-
-#: post-migration.php:636
-msgid "Error (addition failed)"
-msgstr "エラー（追加失敗）"
-
-#: post-migration.php:663 post-migration.php:665
-msgid "Taxonomy: "
-msgstr "タクソノミ:"
-
-#: post-migration.php:665
-msgid "has been registered."
-msgstr "登録されています"
-
-#: post-migration.php:673
-msgid "Custom Field Import:"
-msgstr "カスタムフィールドのインポート"
-
-#: post-migration.php:714
-msgid "Custom Field Import(ACF):"
-msgstr "カスタムフィールドのインポート（ACF)"
-
-#: post-migration.php:720
-msgid "Custom Field Import(ACF GROUP):"
-msgstr "カスタムフィールドのインポート（ACFグループ)"
-
-#: post-migration.php:723
-msgid ": ACF or SCF is not installed"
-msgstr ":ACFかSCFがインストールされていません。"
-
-#: post-migration.php:729
-msgid "comment item has been registered."
-msgstr "コメント項目が登録されました。"
-
-#: post-migration.php:803
-msgid "File not found (file name:"
-msgstr "ファイルが見つかりません(ファイル名:"
-
-#: post-migration.php:815
-msgid "Processing stopped due to existing file found (media ID:"
-msgstr "既存のファイルが見つかったため処理を中止しました。 (メディア ID:"
-
-#: post-migration.php:843
-msgid "File uploaded"
-msgstr "ファイルのアップロードしました。"
-
-#: post-migration.php:846
-msgid "Failed to upload file"
-msgstr "ファイルのアップロードに失敗しました。"
-
-#: post-migration.php:855
-msgid "Upload thumbnail: "
-msgstr "サムネイルをアップロード:"
-
-#: post-migration.php:857
-msgid "Uploading in-content media: "
-msgstr "本文内メディアのアップロード:"
-
-#: post-migration.php:861
-msgid "Uploading acf media: "
-msgstr "ACFメディアのアップロード:"
-
-#: post-migration.php:897
+#: post-migration.php:279
 msgid "Post Data Custom Export"
 msgstr "投稿データのカスタムエクスポート"
 
-#: post-migration.php:898
+#: post-migration.php:280
 msgid "Select the articles you want to export."
 msgstr "エクスポートする記事を選択してください。"
 
-#: post-migration.php:901
+#: post-migration.php:283
 msgid "Include custom fields"
 msgstr "カスタムフィールドを含む"
 
-#: post-migration.php:905
+#: post-migration.php:287
 msgid "Include revisions"
 msgstr "リビジョンを含む"
 
-#: post-migration.php:909
+#: post-migration.php:291
 msgid "Include comments"
 msgstr "コメントを含む"
 
-#: post-migration.php:960
+#: post-migration.php:342
 msgid " Select all records"
 msgstr "全ての投稿を選択"
 
-#: post-migration.php:967
+#: post-migration.php:349
 msgid "Featured"
 msgstr "アイキャッチ"
 
-#: post-migration.php:972
+#: post-migration.php:354
 msgid "Updated on"
 msgstr "上書き"
 
-#: post-migration.php:984
+#: post-migration.php:366
 msgid "None"
 msgstr "なし"
 
-#: post-migration.php:1016
+#: post-migration.php:398
 msgid "Before"
 msgstr "前へ"
 
-#: post-migration.php:1020
+#: post-migration.php:402
 msgid "Page"
 msgstr "ページ"
 
-#: post-migration.php:1031
+#: post-migration.php:413
 msgid "Next"
 msgstr "次へ"
 
@@ -265,6 +169,83 @@ msgstr "件中"
 #: assets/js/itmar-progress-overlay.js:43
 msgid "Processing..."
 msgstr "処理中..."
+
+#: assets/js/post-mi-script.js:250
+msgid "Parsing import file..."
+msgstr "インポートファイルの解析中..."
+
+#: assets/js/post-mi-script.js:266
+msgid "Select the ZIP file."
+msgstr "ZIPファイルを選択してください。"
+
+#: assets/js/post-mi-script.js:279
+msgid "export_data.json not found."
+msgstr "export_data.jsonが見つかりません。"
+
+#: assets/js/post-mi-script.js:474
+msgid "Download the import log"
+msgstr "インポートログのダウンロード"
+
+#~ msgid "Skip (unregistered post type)"
+#~ msgstr "スキップ（未登録の投稿タイプ）"
+
+#~ msgid "Skip (Existing revison data available)"
+#~ msgstr "スキップ（既存のリビジョンデータあり）"
+
+#~ msgid "Error (update failed)"
+#~ msgstr "エラー（更新失敗）"
+
+#~ msgid "Overwrite successful"
+#~ msgstr "上書き成功"
+
+#~ msgid "Addition successful"
+#~ msgstr "追加成功"
+
+#~ msgid "Error (addition failed)"
+#~ msgstr "エラー（追加失敗）"
+
+#~ msgid "Taxonomy: "
+#~ msgstr "タクソノミ:"
+
+#~ msgid "has been registered."
+#~ msgstr "登録されています"
+
+#~ msgid "Custom Field Import:"
+#~ msgstr "カスタムフィールドのインポート"
+
+#~ msgid "Custom Field Import(ACF):"
+#~ msgstr "カスタムフィールドのインポート（ACF)"
+
+#~ msgid "Custom Field Import(ACF GROUP):"
+#~ msgstr "カスタムフィールドのインポート（ACFグループ)"
+
+#~ msgid ": ACF or SCF is not installed"
+#~ msgstr ":ACFかSCFがインストールされていません。"
+
+#~ msgid "comment item has been registered."
+#~ msgstr "コメント項目が登録されました。"
+
+#~ msgid "File not found (file name:"
+#~ msgstr "ファイルが見つかりません(ファイル名:"
+
+#~ msgid "Processing stopped due to existing file found (media ID:"
+#~ msgstr ""
+#~ "既存のファイルが見つかったため処理を中止しました。 (メディア ID:"
+
+#~ msgid "File uploaded"
+#~ msgstr "ファイルのアップロードしました。"
+
+#~ msgid "Failed to upload file"
+#~ msgstr "ファイルのアップロードに失敗しました。"
+
+#~ msgid "Upload thumbnail: "
+#~ msgstr "サムネイルをアップロード:"
+
+#~ msgid "Uploading in-content media: "
+#~ msgstr "本文内メディアのアップロード:"
+
+#~ msgid "Uploading acf media: "
+#~ msgstr "ACFメディアのアップロード:"
 
 #~ msgid "Unpacked image not found:"
 #~ msgstr "解凍された画像が見つかりません:"

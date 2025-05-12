@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-04-28T03:10:21+02:00\n"
+"POT-Creation-Date: 2025-05-11T14:08:48+02:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: post-migration\n"
@@ -34,221 +34,121 @@ msgstr ""
 msgid "https://itmaroon.net"
 msgstr ""
 
-#: post-migration.php:80
+#: post-migration.php:88
 msgid "Import"
 msgstr ""
 
-#: post-migration.php:81
+#: post-migration.php:89
 msgid "import"
 msgstr ""
 
-#: post-migration.php:90
+#: post-migration.php:98
 msgid "Export"
 msgstr ""
 
-#: post-migration.php:91
+#: post-migration.php:99
 msgid "export"
 msgstr ""
 
-#: post-migration.php:110
-#: post-migration.php:884
+#: post-migration.php:118
+#: post-migration.php:266
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: post-migration.php:115
+#: post-migration.php:123
 msgid "Post Data Import"
 msgstr ""
 
-#: post-migration.php:120
+#: post-migration.php:128
 msgid "ZIP file to import"
 msgstr ""
 
-#: post-migration.php:128
+#: post-migration.php:136
 msgid "How to import"
 msgstr ""
 
-#: post-migration.php:131
+#: post-migration.php:139
 msgid "Add new record"
 msgstr ""
 
-#: post-migration.php:134
+#: post-migration.php:142
 msgid "Override by ID"
 msgstr ""
 
-#: post-migration.php:142
+#: post-migration.php:150
 msgid "Start Import"
 msgstr ""
 
-#: post-migration.php:147
+#: post-migration.php:155
 msgid "Import Result"
 msgstr ""
 
-#: post-migration.php:152
-#: post-migration.php:967
+#: post-migration.php:160
+#: post-migration.php:349
 msgid "Title"
 msgstr ""
 
-#: post-migration.php:153
+#: post-migration.php:161
 msgid "Post Type"
 msgstr ""
 
-#: post-migration.php:154
+#: post-migration.php:162
 msgid "Result"
 msgstr ""
 
-#: post-migration.php:177
-msgid "Parsing import file..."
-msgstr ""
-
-#: post-migration.php:190
-msgid "Select the ZIP file."
-msgstr ""
-
-#: post-migration.php:203
-msgid "export_data.json not found."
-msgstr ""
-
-#: post-migration.php:396
-msgid "Download the import log"
-msgstr ""
-
-#: post-migration.php:473
+#: post-migration.php:182
 msgid "Processing has been aborted"
 msgstr ""
 
-#: post-migration.php:491
+#: post-migration.php:201
 msgid "Incorrect data"
 msgstr ""
 
-#: post-migration.php:573
-#: post-migration.php:577
-msgid "Skip (unregistered post type)"
-msgstr ""
-
-#: post-migration.php:585
-msgid "Skip (Existing revison data available)"
-msgstr ""
-
-#: post-migration.php:623
-msgid "Error (update failed)"
-msgstr ""
-
-#: post-migration.php:626
-msgid "Overwrite successful"
-msgstr ""
-
-#: post-migration.php:628
-#: post-migration.php:639
-#: post-migration.php:641
-msgid "Addition successful"
-msgstr ""
-
-#: post-migration.php:636
-msgid "Error (addition failed)"
-msgstr ""
-
-#: post-migration.php:663
-#: post-migration.php:665
-msgid "Taxonomy: "
-msgstr ""
-
-#: post-migration.php:665
-msgid "has been registered."
-msgstr ""
-
-#: post-migration.php:673
-msgid "Custom Field Import:"
-msgstr ""
-
-#: post-migration.php:714
-msgid "Custom Field Import(ACF):"
-msgstr ""
-
-#: post-migration.php:720
-msgid "Custom Field Import(ACF GROUP):"
-msgstr ""
-
-#: post-migration.php:723
-msgid ": ACF or SCF is not installed"
-msgstr ""
-
-#: post-migration.php:729
-msgid "comment item has been registered."
-msgstr ""
-
-#: post-migration.php:803
-msgid "File not found (file name:"
-msgstr ""
-
-#: post-migration.php:815
-msgid "Processing stopped due to existing file found (media ID:"
-msgstr ""
-
-#: post-migration.php:843
-msgid "File uploaded"
-msgstr ""
-
-#: post-migration.php:846
-msgid "Failed to upload file"
-msgstr ""
-
-#: post-migration.php:855
-msgid "Upload thumbnail: "
-msgstr ""
-
-#: post-migration.php:857
-msgid "Uploading in-content media: "
-msgstr ""
-
-#: post-migration.php:861
-msgid "Uploading acf media: "
-msgstr ""
-
-#: post-migration.php:897
+#: post-migration.php:279
 msgid "Post Data Custom Export"
 msgstr ""
 
-#: post-migration.php:898
+#: post-migration.php:280
 msgid "Select the articles you want to export."
 msgstr ""
 
-#: post-migration.php:901
+#: post-migration.php:283
 msgid "Include custom fields"
 msgstr ""
 
-#: post-migration.php:905
+#: post-migration.php:287
 msgid "Include revisions"
 msgstr ""
 
-#: post-migration.php:909
+#: post-migration.php:291
 msgid "Include comments"
 msgstr ""
 
-#: post-migration.php:960
+#: post-migration.php:342
 msgid " Select all records"
 msgstr ""
 
-#: post-migration.php:967
+#: post-migration.php:349
 msgid "Featured"
 msgstr ""
 
-#: post-migration.php:972
+#: post-migration.php:354
 msgid "Updated on"
 msgstr ""
 
-#: post-migration.php:984
+#: post-migration.php:366
 msgid "None"
 msgstr ""
 
-#: post-migration.php:1016
+#: post-migration.php:398
 msgid "Before"
 msgstr ""
 
-#: post-migration.php:1020
+#: post-migration.php:402
 msgid "Page"
 msgstr ""
 
-#: post-migration.php:1031
+#: post-migration.php:413
 msgid "Next"
 msgstr ""
 
@@ -262,4 +162,20 @@ msgstr ""
 
 #: assets/js/itmar-progress-overlay.js:43
 msgid "Processing..."
+msgstr ""
+
+#: assets/js/post-mi-script.js:250
+msgid "Parsing import file..."
+msgstr ""
+
+#: assets/js/post-mi-script.js:266
+msgid "Select the ZIP file."
+msgstr ""
+
+#: assets/js/post-mi-script.js:279
+msgid "export_data.json not found."
+msgstr ""
+
+#: assets/js/post-mi-script.js:474
+msgid "Download the import log"
 msgstr ""
