@@ -3,7 +3,7 @@ Contributors: itmaroon
 Tags: post, duplicate, transfer, media
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 0.1.1
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 8.2
@@ -24,6 +24,8 @@ This plugin allows you to select what to export for each individual post.
 * [POST MIGRATION:Github](https://github.com/itmaroon/post-migration)
 * [block-class-package:GitHub](https://github.com/itmaroon/block-class-package)  
 * [block-class-package:Packagist](https://packagist.org/packages/itmar/block-class-package) 
+* [wpsetting-class-package:GitHub](https://github.com/itmaroon/wpsetting-class-package)  
+* [wpsetting-class-package:Packagist](https://packagist.org/packages/itmar/wpsetting-class-package) 
 
 == Installation ==
 
@@ -51,7 +53,7 @@ OR…
 
 == Changelog ==
 
-= 0.1.0 =
+= 1.0.0 =
 * Release
 
 == Arbitrary section ==
