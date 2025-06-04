@@ -3,7 +3,7 @@ Contributors: itmaroon
 Tags: post, duplicate, transfer, media
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 8.2
@@ -52,6 +52,9 @@ OR…
 3. Post data import results display screen
 
 == Changelog ==
+
+= 1.0.1 =
+Update due to the version upgrade of the composer package of wpsetting-class-package
 
 = 1.0.0 =
 * Release

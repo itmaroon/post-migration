@@ -4,7 +4,7 @@ Plugin Name:  POST MIGRATION
 Description:  This plugin allows you to export post data along with associated media, revisions, and comments into a ZIP file and port it to another WordPress site.
 Requires at least: 6.4
 Requires PHP:      8.2
-Version:      1.0.0
+Version:      1.0.1
 Author:       Web Creator ITmaroon
 Author URI:   https://itmaroon.net
 License:      GPL v2 or later
